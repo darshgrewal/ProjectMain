@@ -204,7 +204,7 @@ public class TransferHub {
  
 //combined class with other group members
 //deals with file input and output
-class InOut 
+class InOut extends TransferHub
 {
     private int location = 0;       
     private int bytesRead;
