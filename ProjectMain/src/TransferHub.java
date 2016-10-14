@@ -48,11 +48,7 @@ public class TransferHub {
             byte dblock[] = Arrays.copyOfRange(dataPacket.getData(), 4, dataPacket.getLength());
              
             try {
-                newFile.write(dblock);
-            }  catch (SyncFailedException e){
-            	cAndSendError(socket, "Disc full.", 3, dataPacket.getPort());
-            	e.printStackTrace();
-            	return;
+                newFile.write(dblock, socket, dataPacket.getPort());
             } catch (SecurityException | IOException e) {
 				if (e.getMessage().contains("Permission denied")) {
 					System.out.println("Access Violation happened for WRQ on server-side.");
@@ -253,11 +249,19 @@ class InOut
     }
      
     //writes to the file
-    public void write(byte[] info) throws FileNotFoundException, IOException, SecurityException
+    public void write(byte[] info, DatagramSocket sock, int port) throws FileNotFoundException, IOException, SecurityException
     {   
-        BufferedOutputStream out;
-        out = new BufferedOutputStream(new FileOutputStream(fileName, true));
-        out.write(info, 0, info.length);
+    	FileOutputStream out;
+        out = new FileOutputStream(fileName, true);
+	try { 
+        	out.write(info, 0, info.length);
+        	out.getFD().sync();
+	} catch (SyncFailedException e) {
+		System.out.println("Disk is full error happened for WRQ on server-side.");
+		cAndSendError(sock, "Disc full.", 3, port);
+		out.close();
+		return;
+	}
         out.close();
     }
      
