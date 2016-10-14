@@ -252,7 +252,18 @@ class InOut
     public void write(byte[] info, DatagramSocket sock, int port) throws FileNotFoundException, IOException, SecurityException
     {   
     	FileOutputStream out;
-        out = new FileOutputStream(fileName, true);
+        File find = new File(fileName);
+        
+        if(find.exists()){
+       
+        	throw new SecurityException("File already exists!!");
+        }
+        
+        else{
+        	out = new FileOutputStream(fileName, true);
+        }
+        
+
 	try { 
         	out.write(info, 0, info.length);
         	out.getFD().sync();
@@ -261,6 +272,8 @@ class InOut
 		cAndSendError(sock, "Disc full.", 3, port);
 		out.close();
 		return;
+	} catch (SecurityException e){
+		System.err.println();
 	}
         out.close();
     }
