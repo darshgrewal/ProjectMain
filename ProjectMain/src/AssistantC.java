@@ -88,16 +88,17 @@ public class AssistantC extends TransferHub implements Runnable{
   
     //check to see if the data packet is valid and formatted properly  
     private void packetVerify(byte[] packetData) throws InvalidRequestException
-    {       
+    {
+
         if(packetData[0] != (byte)0){
             throw new InvalidRequestException("Error first byte is not a 0");
         }
-        if(packetData[1] != (byte)1 && packetData[1] != (byte)2){
+        if(packetData[1] != (byte)1 && packetData[1] != (byte)2 && packetData[1] != (byte)5){
             throw new InvalidRequestException("Error second byte is not a 1 or a 2");
         }
-        if(packetData[2] == (byte)0){
-            throw new InvalidRequestException("Error no file name");
-        }
+        //if(packetData[2] == (byte)0){
+            //throw new InvalidRequestException("Error no file name");
+        //}
     }
        
     //lets the client know the response depending on which type of request is being received
