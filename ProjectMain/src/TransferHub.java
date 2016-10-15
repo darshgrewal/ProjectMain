@@ -256,13 +256,12 @@ class InOut
         
         if(find.exists()){
        
-        	throw new SecurityException("File already exists!!");
+    		System.out.println("File already exists error happened on WRQ on server-side.");
+    		cAndSendError(sock, "File already exists", 6, port);
         }
         
-        else{
-        	out = new FileOutputStream(fileName, true);
-        }
-        
+     
+        out = new FileOutputStream(fileName, true);
 
 	try { 
         	out.write(info, 0, info.length);
@@ -272,9 +271,7 @@ class InOut
 		cAndSendError(sock, "Disc full.", 3, port);
 		out.close();
 		return;
-	} catch (SecurityException e){
-		System.err.println();
-	}
+	} 
         out.close();
     }
      
