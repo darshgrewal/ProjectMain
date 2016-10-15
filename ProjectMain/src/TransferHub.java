@@ -9,8 +9,11 @@ public class TransferHub {
      
     //the size values shouldn't change so they were made final variables
     public final int SIZEB = 516;
-    public final int SIZEDB = 512;  
-     
+    public final int SIZEDB = 512;
+
+    public final int SERVER = 0;
+    public final int CLIENT = 1;
+
     //creates a receive request to send to the main server class, creating the socket and packet to hold the info
     public void clientRequest(DatagramSocket rSocket, DatagramPacket rPacket)
     {
@@ -32,7 +35,7 @@ public class TransferHub {
     //class handles the files that being sent over from the client
     //stores them in a file of the users choice
  
-    public void getFile(DatagramSocket socket, String fName){
+    public void getFile(DatagramSocket socket, String fName, int callerId){
          
         //holds the message that will be sent over
         byte[] fileInfo = new byte[SIZEB];
@@ -42,19 +45,19 @@ public class TransferHub {
         byte aT[] = new byte[]{0, 4};
         InOut newFile = new InOut(fName);
          
-        while (true){
+        while (true) {
             clientRequest(socket, dataPacket);
+            // if received packet is an error no need to continue
+            if (!checkD(dataPacket.getData())) {
+                break;
+            }
             byte blockbyte[] = Arrays.copyOfRange(dataPacket.getData(), 2, 4);
             byte dblock[] = Arrays.copyOfRange(dataPacket.getData(), 4, dataPacket.getLength());
              
             try {
-                newFile.write(dblock, socket, dataPacket.getPort());
-            } catch (SecurityException | IOException e) {
-				if (e.getMessage().contains("Permission denied")) {
-					System.out.println("Access Violation happened for WRQ on server-side.");
-					cAndSendError(socket, "Access violation.", 2, dataPacket.getPort());
-				}
-                e.printStackTrace();
+                if(! newFile.write(dblock, socket, dataPacket.getPort(), callerId))
+                    return;
+            } catch (Exception e) {
                 return;
             }
              
@@ -104,7 +107,7 @@ public class TransferHub {
      
     //in charge of sending the file over to the client
     //the file that is needed is passed in and then transferred over from the server folder to the client
-    public void sendFile(DatagramSocket socket, int pNumber, String fName)
+    public void sendFile(DatagramSocket socket, int pNumber, String fName, int callerId)
     {
         byte[] fileInfo;
          
@@ -122,10 +125,19 @@ public class TransferHub {
             try {
                 dataBInfo = newFile.read(SIZEDB);
             } catch (SecurityException | IOException e) {
+                String commonErrorMssg = callerId == SERVER? "server for RRQ." : "client for WRQ.";
 				if (e.getMessage().contains("Permission denied")) {
-					System.out.println("Access Violation happened for RRQ on server-side.");
+                    String errorMessage = String.format("Access Violation happened on the %s", commonErrorMssg);
+
+                    System.out.println(errorMessage);
 					cAndSendError(socket, "Access violation.", 2, pNumber);
-				}
+				} else if (e.getMessage().contains("No such file or directory")) {
+                    String errorMessage = String.format("File not found on the %s", commonErrorMssg);
+
+                    System.out.println(errorMessage);
+                    cAndSendError(socket, "File not found.", 1, pNumber);
+                }
+
                 e.printStackTrace();
                 return;
             }
@@ -138,16 +150,20 @@ public class TransferHub {
             fileInfo = new byte[SIZEB];
             DatagramPacket ack = new DatagramPacket(fileInfo, fileInfo.length);
             clientRequest(socket, ack);
-            checkA(ack.getData(), newB);
-             
-            if (newB[1] < 255) newB[1]++;
-            else if (newB[1] == 255 && newB[0] < 255) newB[0]++;
-            else {
-                newB[0] = 0;
-                newB[1] = 1;
-            }
-             
-            if (dataBInfo.length < 512){ 
+
+            if (checkA(ack.getData(), newB)) {
+
+                if (newB[1] < 255) newB[1]++;
+                else if (newB[1] == 255 && newB[0] < 255) newB[0]++;
+                else {
+                    newB[0] = 0;
+                    newB[1] = 1;
+                }
+
+                if (dataBInfo.length < 512) {
+                    break;
+                }
+            } else { // received error packet instead of ack
                 break;
             }
         }
@@ -165,7 +181,7 @@ public class TransferHub {
         return finalBA;
     }
      
-    //checks to see if the data is ack
+    //checks to see if the data is ACK or ERROR
     private boolean checkA(byte[] fileInfo, byte[] block) {
         //checks to see if it is 0 4 0 1
         if (fileInfo[0] == 0 && fileInfo[1] == 4 && fileInfo[2] == block[0] && fileInfo[3] == block[1]) {
@@ -176,20 +192,28 @@ public class TransferHub {
     }
      
  
+    //checks to see if the content of the packet is DATA or ERROR
+    private boolean checkD(byte[] fileInfo) {
+        //checks to see if it is 0 4 0 1
+        if (fileInfo[0] == 0 && fileInfo[1] == 3) {
+            return true;
+        }
+
+        return false;
+    }
+
+
     //creates an error packet and sends it depending on the type
     //not fully functional, needed for next iteration to fully work
     protected void cAndSendError(DatagramSocket socket, String info, int eInfo, int pNumber) {
         byte[] msg = {0, 5, 0, (byte)eInfo};
 
-        // the error packet should end in a trailing zero
-        byte[] tail = {0};
-
         msg = byteArrayCreater(msg, info.getBytes());
-        msg = byteArrayCreater(msg, tail);
+        msg = byteArrayCreater(msg, new byte[]{0});
 
         sendBytes(socket, pNumber, msg);
     }
-     
+
     //prints the file information
     protected void displayInfo(DatagramPacket packet, byte[] fileInfo){
         int packetLength = packet.getLength();
@@ -199,80 +223,119 @@ public class TransferHub {
         System.out.println("Containing " + new String(fileInfo,0,packetLength));
         System.out.println("Information in byte form: " + Arrays.toString(fileInfo) + "\n");
     }
-}
- 
- 
+
 //combined class with other group members
 //deals with file input and output
-class InOut 
-{
-    private int location = 0;       
-    private int bytesRead;
-    private String fileName;
-     
-    //creates a instance of the class which contains the certain file
-    public InOut(String file)
+    class InOut
     {
-        fileName = file;
-        location = 0;       
-        bytesRead = 0;
-    }
-     
-    //reads from the file and returns it in byte form
-    public byte[] read(int blocks) throws FileNotFoundException, IOException, SecurityException
-    {
-        BufferedInputStream in = new BufferedInputStream(new FileInputStream(fileName));
-         
-        byte[] dataRead = new byte[blocks];
-         
-        in.skip((long) location);
-        if((bytesRead = in.read(dataRead)) != -1)
+        private int location = 0;
+        private int bytesRead;
+        private String fileName;
+
+        //creates a instance of the class which contains the certain file
+        public InOut(String file)
         {
-            location += bytesRead;
-        }       
-        else
-        {
-            location = 0;   
+            fileName = file;
+            location = 0;
             bytesRead = 0;
         }
-         
-        in.close();
-         
-        if(bytesRead < blocks)
-        {
-            System.out.println("Fixing array information... ");
-            byte dataReadTrim[] = Arrays.copyOf(dataRead, bytesRead);
-            return dataReadTrim;
-        }
-         
-        return dataRead;
-    }
-     
-    //writes to the file
-    public void write(byte[] info, DatagramSocket sock, int port) throws FileNotFoundException, IOException, SecurityException
-    {   
-    	FileOutputStream out;
-        File find = new File(fileName);
-        
-        if(find.exists()){
-       
-    		System.out.println("File already exists error happened on WRQ on server-side.");
-    		cAndSendError(sock, "File already exists", 6, port);
-        }
-        
-     
-        out = new FileOutputStream(fileName, true);
 
-	try { 
-        	out.write(info, 0, info.length);
-        	out.getFD().sync();
-	} catch (SyncFailedException e) {
-		System.out.println("Disk is full error happened for WRQ on server-side.");
-		cAndSendError(sock, "Disc full.", 3, port);
-		out.close();
-		return;
-	} 
-        out.close();
+        //reads from the file and returns it in byte form
+        public byte[] read(int blocks) throws FileNotFoundException, IOException, SecurityException
+        {
+            BufferedInputStream in = new BufferedInputStream(new FileInputStream(fileName));
+
+            byte[] dataRead = new byte[blocks];
+
+            in.skip((long) location);
+            if((bytesRead = in.read(dataRead)) != -1)
+            {
+                location += bytesRead;
+            }
+            else
+            {
+                location = 0;
+                bytesRead = 0;
+            }
+
+            in.close();
+
+            if(bytesRead < blocks)
+            {
+                System.out.println("Fixing array information... ");
+                byte dataReadTrim[] = Arrays.copyOf(dataRead, bytesRead);
+                return dataReadTrim;
+            }
+
+            return dataRead;
+        }
+
+        //writes to the file
+        public boolean write(byte[] info, DatagramSocket sock, int port, int callerId) throws IOException {
+            FileOutputStream out = null;
+            File find = new File(fileName);
+
+            if(find.exists()){
+                String commonErrorMssg = callerId == SERVER? "server for WRQ." : "client for RRQ.";
+                String errorMessage = String.format("File already exists error happened on the %s", commonErrorMssg);
+
+                System.out.println(errorMessage);
+                cAndSendError(sock, "File already exists.", 6, port);
+            }
+            else {
+                try {
+                    out = new FileOutputStream(fileName, true);
+                } catch (IOException e) {
+                    String commonErrorMssg = callerId == SERVER? "server for WRQ." : "client for RRQ.";
+                    if (e.getMessage().contains("Permission denied")) {
+                        String errorMessage = String.format("Access Violation happened on the %s", commonErrorMssg);
+
+                        System.out.println(errorMessage);
+                        cAndSendError(sock, "Access violation.", 2, port);
+                    } else if (e.getMessage().contains("No such file or directory")) {
+                        String errorMessage = String.format("File not found on the %s", commonErrorMssg);
+
+                        System.out.println(errorMessage);
+                        cAndSendError(sock, "File not found.", 1, port);
+                    }
+                    e.printStackTrace();
+                    return false;
+                }
+            }
+
+            try {
+                out.write(info, 0, info.length);
+                out.getFD().sync();
+            } catch (SyncFailedException e) {
+                String commonErrorMssg = callerId == SERVER? "server for WRQ." : "client for RRQ.";
+                String errorMessage = String.format("Disk full happened on the %s", commonErrorMssg);
+
+                System.out.println(errorMessage);
+                cAndSendError(sock, "Disk full or allocation exceeded.", 3, port);
+                out.close();
+                return false;
+            } catch (SecurityException e){
+                System.err.println();
+                return false;
+            } catch (IOException e) {
+                String commonErrorMssg = callerId == SERVER? "server for WRQ." : "client for RRQ.";
+                if (e.getMessage().contains("Permission denied")) {
+                    String errorMessage = String.format("Access Violation happened on the %s", commonErrorMssg);
+
+                    System.out.println(errorMessage);
+                    cAndSendError(sock, "Access violation.", 2, port);
+                } else if (e.getMessage().contains("No such file or directory")) {
+                    String errorMessage = String.format("File not found on the %s", commonErrorMssg);
+
+                    System.out.println(errorMessage);
+                    cAndSendError(sock, "File not found.", 1, port);
+                }
+                e.printStackTrace();
+                return false;
+            }
+            out.close();
+            return true;
+        }
+
     }
-     
 }
