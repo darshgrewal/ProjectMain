@@ -1,10 +1,12 @@
 import java.io.*;
 import java.net.*;
+import java.util.Scanner;
   
 public class Intermediate implements Runnable{
   
     DatagramSocket receiveSocket, sendReceiveSocket;
     int threads = 0;//number of current threads
+    String type = null;
   
     public Intermediate()
     {
@@ -17,6 +19,7 @@ public class Intermediate implements Runnable{
       
     public void run()
     {
+	Scanner scan = new Scanner(System.in);
         System.out.print("Enter (1) for normal operation, enter (1) to lose a packet, enter (3) delay a packet, or enter (4) to duplicate a packet:");
         int choice = scan.nextInt();		
 
@@ -25,14 +28,29 @@ public class Intermediate implements Runnable{
         } else if ( choice == 2 ){
           System.out.print("Choose an integer number for which packet to lose:");
           int chosenPacket = scan.nextInt();
+          System.out.print("Choose type of packet to lose(request,ack, or data):");
+	  String typeChosen = scan.nextLine();
+          System.out.print("Choose to implement error for server (type 1) or client (type 2):");
+	  String side = scan.nextInt();
         } else if ( choice == 3 ){
           System.out.print("Choose an integer number for which packet to delay:");
           int chosenPacket = scan.nextInt();
           System.out.print("Choose an integer number for how many milliseconds to delay:");
           int delay = scan.nextInt();
+          System.out.print("Choose type of packet to lose(request,ack, or data):");
+	  String typeChosen = scan.nextLine();
+          System.out.print("Choose to implement error for server (type 1) or client (type 2):");
+	  String side = scan.nextInt();
+          int delay = scan.nextInt();
         } else if ( choice == 4) {
           System.out.print("Choose an integer number for which packet to duplicate:");
           int chosenPacket = scan.nextInt();	
+          System.out.print("Choose an integer number for how many milliseconds to delay:");
+          int delay = scan.nextInt();
+          System.out.print("Choose type of packet to lose(request,ack, or data):");
+	  String typeChosen = scan.nextLine();
+          System.out.print("Choose to implement error for server (type 1) or client (type 2):");
+	  String side = scan.nextInt();
         }
       
         while(true){
@@ -49,10 +67,18 @@ public class Intermediate implements Runnable{
                   
                 //Process the received datagram.
                 printInfo(forwardingPacket);
-                
+		if (forwardingPacket.getData()[1] = 1 || forwardingPacket.getData()[1] = 2) {
+			type = "request;
+		} else if forwardingPacket.getData()[1] = 3) {
+			type = "ack;
+		} else if forwardingPacket.getData()[1] = 4) {
+			type = "data;
+		} else if forwardingPacket.getData()[1] = 5) {
+			type = "error";
+		}                
               
                 /* insert statement to check for client sent ack or client sent data or request and chosen packet*/
-                if (true) {
+                if ((choice == 1 || (choice == 2 && type == typeChosen && packetNo == chosenPacket)) && side == 1) {
                   
                   // Forward packet to server
                   forwardingPacket = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), InetAddress.getLocalHost(), 69);
@@ -75,15 +101,15 @@ public class Intermediate implements Runnable{
                   printInfo(forwardingPacket);
                   
                   /* insert statement to check for server sent ack or server sent data and chosen packet*/
-	                if (true) {
-                    // Forward response to client
-                    forwardingPacket = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), clientAddress, clientPort);
-                    sendReceiveSocket.send(forwardingPacket);
+	          if ((choice == 1 || (choice == 2 && type == typeChosen && packetNo == chosenPacket)) && side == 2) {
+		    // Forward response to client
+		    forwardingPacket = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), clientAddress, clientPort);
+		    sendReceiveSocket.send(forwardingPacket);
 
-                    //print out sent datagram
-                    System.out.println("Intermediate: Packet sending:");
-                    System.out.println("String: " + new String(forwardingPacket.getData(),0,forwardingPacket.getLength()));
-                    System.out.println("Bytes: " + forwardingPacket.getData());
+		    //print out sent datagram
+		    System.out.println("Intermediate: Packet sending:");
+		    System.out.println("String: " + new String(forwardingPacket.getData(),0,forwardingPacket.getLength()));
+		    System.out.println("Bytes: " + forwardingPacket.getData());
                   }
                   
                 }
