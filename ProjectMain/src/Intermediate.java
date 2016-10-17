@@ -20,7 +20,7 @@ public class Intermediate implements Runnable{
     public void run()
     {
 	Scanner scan = new Scanner(System.in);
-        System.out.print("Enter (1) for normal operation, enter (1) to lose a packet, enter (3) delay a packet, or enter (4) to duplicate a packet:");
+        System.out.print("Enter (1) for normal operation, enter (2) to lose a packet, enter (3) delay a packet, or enter (4) to duplicate a packet:");
         int choice = scan.nextInt();		
 
         if ( choice == 1){
@@ -37,7 +37,7 @@ public class Intermediate implements Runnable{
           int chosenPacket = scan.nextInt();
           System.out.print("Choose an integer number for how many milliseconds to delay:");
           int delay = scan.nextInt();
-          System.out.print("Choose type of packet to lose(request,ack, or data):");
+          System.out.print("Choose type of packet to delay(request,ack, or data):");
 	  String typeChosen = scan.nextLine();
           System.out.print("Choose to implement error for server (type 1) or client (type 2):");
 	  String side = scan.nextInt();
@@ -45,9 +45,9 @@ public class Intermediate implements Runnable{
         } else if ( choice == 4) {
           System.out.print("Choose an integer number for which packet to duplicate:");
           int chosenPacket = scan.nextInt();	
-          System.out.print("Choose an integer number for how many milliseconds to delay:");
+          System.out.print("Choose an integer number for how many milliseconds between duplicates:");
           int delay = scan.nextInt();
-          System.out.print("Choose type of packet to lose(request,ack, or data):");
+          System.out.print("Choose type of packet to duplicate(request,ack, or data):");
 	  String typeChosen = scan.nextLine();
           System.out.print("Choose to implement error for server (type 1) or client (type 2):");
 	  String side = scan.nextInt();
@@ -78,39 +78,57 @@ public class Intermediate implements Runnable{
 		}                
               
                 /* insert statement to check for client sent ack or client sent data or request and chosen packet*/
-                if ((choice == 1 || (choice == 2 && type == typeChosen && packetNo == chosenPacket)) && side == 1) {
-                  
-                  // Forward packet to server
-                  forwardingPacket = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), InetAddress.getLocalHost(), 69);
+                if ((choice == 1 || choice == 3 || !(choice == 2 && type == typeChosen && packetNo == chosenPacket)) && side == 1) {
+                
+		  if (choice == 3 && type == typeChosen && packetNo == chosenPacket && side == 1) {
+			  wait(delay);
+		  }
+		  
+		  if (choice == 4 && type == typeChosen && packetNo == chosenPacket && side == 1) {
+			  int x = 2;
+		  else {
+			  int x = 1
+		  }
+		  while ( x-- > 0 ) {
+			  if (x == 1) {
+				  wait(delay);
+			  }
+			  // Forward packet to server
+			  forwardingPacket = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), InetAddress.getLocalHost(), 69);
 
-                  //print out packet sent
-                  System.out.println("Intermediate: Packet sending:");
-                  System.out.println("String: " + new String(forwardingPacket.getData(),0,forwardingPacket.getLength()));
-                  System.out.println("Bytes: " + forwardingPacket.getData());       
+			  //print out packet sent
+			  System.out.println("Intermediate: Packet sending:");
+			  System.out.println("String: " + new String(forwardingPacket.getData(),0,forwardingPacket.getLength()));
+			  System.out.println("Bytes: " + forwardingPacket.getData());       
 
-                  sendReceiveSocket = new DatagramSocket();
-                  sendReceiveSocket.send(forwardingPacket);
+			  sendReceiveSocket = new DatagramSocket();
+			  sendReceiveSocket.send(forwardingPacket);
 
-                  // Receive response from server
-                  data = new byte[100];
-                  forwardingPacket = new DatagramPacket(data, data.length);
+			  // Receive response from server
+			  data = new byte[100];
+			  forwardingPacket = new DatagramPacket(data, data.length);
 
-                  sendReceiveSocket.receive(forwardingPacket);
+			  sendReceiveSocket.receive(forwardingPacket);
 
-                  //print information
-                  printInfo(forwardingPacket);
-                  
-                  /* insert statement to check for server sent ack or server sent data and chosen packet*/
-	          if ((choice == 1 || (choice == 2 && type == typeChosen && packetNo == chosenPacket)) && side == 2) {
-		    // Forward response to client
-		    forwardingPacket = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), clientAddress, clientPort);
-		    sendReceiveSocket.send(forwardingPacket);
+			  //print information
+			  printInfo(forwardingPacket);
 
-		    //print out sent datagram
-		    System.out.println("Intermediate: Packet sending:");
-		    System.out.println("String: " + new String(forwardingPacket.getData(),0,forwardingPacket.getLength()));
-		    System.out.println("Bytes: " + forwardingPacket.getData());
-                  }
+			  /* insert statement to check for server sent ack or server sent data and chosen packet*/
+			  if ((choice == 1 || choice == 3 || !(choice == 2 && type == typeChosen && packetNo == chosenPacket)) && side == 2) {
+
+			    if (choice == 3 && type == typeChosen && packetNo == chosenPacket && side == 2 && packetNo == chosenPacket) {
+				  wait(delay);
+			    }
+			    // Forward response to client
+			    forwardingPacket = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), clientAddress, clientPort);
+			    sendReceiveSocket.send(forwardingPacket);
+
+			    //print out sent datagram
+			    System.out.println("Intermediate: Packet sending:");
+			    System.out.println("String: " + new String(forwardingPacket.getData(),0,forwardingPacket.getLength()));
+			    System.out.println("Bytes: " + forwardingPacket.getData());
+			  }
+		  }
                   
                 }
               
