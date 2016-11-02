@@ -69,11 +69,11 @@ public class Intermediate implements Runnable{
                 printInfo(forwardingPacket);
 		if (forwardingPacket.getData()[1] = 1 || forwardingPacket.getData()[1] = 2) {
 			type = "request;
-		} else if forwardingPacket.getData()[1] = 3) {
+		} else if (forwardingPacket.getData()[1] = 3) {
 			type = "ack;
-		} else if forwardingPacket.getData()[1] = 4) {
+		} else if (forwardingPacket.getData()[1] = 4) {
 			type = "data;
-		} else if forwardingPacket.getData()[1] = 5) {
+		} else if (forwardingPacket.getData()[1] = 5) {
 			type = "error";
 		}                
               
