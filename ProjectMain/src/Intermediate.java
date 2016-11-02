@@ -68,11 +68,11 @@ public class Intermediate implements Runnable{
                 //Process the received datagram.
                 printInfo(forwardingPacket);
 		if (forwardingPacket.getData()[1] = 1 || forwardingPacket.getData()[1] = 2) {
-			type = "request;
+			type = "request";
 		} else if (forwardingPacket.getData()[1] = 3) {
-			type = "ack;
+			type = "ack";
 		} else if (forwardingPacket.getData()[1] = 4) {
-			type = "data;
+			type = "data";
 		} else if (forwardingPacket.getData()[1] = 5) {
 			type = "error";
 		}                
