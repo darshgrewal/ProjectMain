@@ -82,6 +82,8 @@ public class Intermediate implements Runnable{
                 
 		  if (choice == 3 && type == typeChosen && packetNo == chosenPacket && side == 1) {
 			  wait(delay);
+		  } else if (choice == 2) {
+			  break;
 		  }
 		  
 		  if (choice == 4 && type == typeChosen && packetNo == chosenPacket && side == 1) {
@@ -90,9 +92,6 @@ public class Intermediate implements Runnable{
 			  int x = 1
 		  }
 		  while ( x-- > 0 ) {
-			  if (x == 1) {
-				  wait(delay);
-			  }
 			  // Forward packet to server
 			  forwardingPacket = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), InetAddress.getLocalHost(), 69);
 
