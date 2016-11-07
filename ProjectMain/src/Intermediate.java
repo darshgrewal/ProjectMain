@@ -6,7 +6,8 @@ public class Intermediate implements Runnable {
 
     DatagramSocket receiveSocket, sendReceiveSocket;
     //TODO: intermediate was supposed to go along side the client. Since the client is single threaded what is the use for this variable here? This variable is never used for any condition checking!
-    int threads = 0;//number of current threads
+    //DONE: commented it out, though i'm not the one that put it there so you may have to talk to whoever did
+    //int threads = 0;//number of current threads
     String type = null;
 
     public Intermediate() {
@@ -25,6 +26,7 @@ public class Intermediate implements Runnable {
         int choice = 0;
 
         //TODO: maybe we need different packet numbers based on ack or data type
+	//DONE: shouldn't it be the same because there will be for example an ack #3 packet in response to data #3 packet
         int packetNo = 0;
 
         Scanner scan = new Scanner(System.in);
@@ -41,7 +43,7 @@ public class Intermediate implements Runnable {
             chosenPacket = scan.nextInt();
             System.out.print("Choose type of packet to lose(request,ack, or data):");
             typeChosen = scan.nextLine();
-            System.out.print("Choose to implement error for server (type 1) or client (type 2):");
+            System.out.print("Choose to implement error for server (type 0) or client (type 1):");
             side = scan.nextInt();
         } else if (choice == 3) {
             System.out.print("Choose an integer number for which packet to delay:");
@@ -96,54 +98,52 @@ public class Intermediate implements Runnable {
 
                     if (choice == 3 && type == typeChosen && packetNo == chosenPacket && side == 1) {
                         wait(delay);
-                    } else if (choice == 2) {
-                        //TODO: break here will break from the while (true) case and no forwarding is done after that. Make sure this is what was intended.
-                        break;
                     }
+		    if (choice == 2 && type == typeChosen && packetNo == chosenPacket && side == 1) {
+			    int x;
+			    if (choice == 4 && type == typeChosen && packetNo == chosenPacket && side == 1) {
+				x = 2;
+			    } else {
+				x = 1;
+			    }
+			    while (x-- > 0) {
+				// Forward packet to server
+				forwardingPacket = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), InetAddress.getLocalHost(), 69);
 
-                    int x;
-                    if (choice == 4 && type == typeChosen && packetNo == chosenPacket && side == 1) {
-                        x = 2;
-                    } else {
-                        x = 1;
-                    }
-                    while (x-- > 0) {
-                        // Forward packet to server
-                        forwardingPacket = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), InetAddress.getLocalHost(), 69);
+				//print out packet sent
+				System.out.println("Intermediate: Packet sending:");
+				System.out.println("String: " + new String(forwardingPacket.getData(), 0, forwardingPacket.getLength()));
+				System.out.println("Bytes: " + forwardingPacket.getData());
 
-                        //print out packet sent
-                        System.out.println("Intermediate: Packet sending:");
-                        System.out.println("String: " + new String(forwardingPacket.getData(), 0, forwardingPacket.getLength()));
-                        System.out.println("Bytes: " + forwardingPacket.getData());
+				sendReceiveSocket = new DatagramSocket();
+				sendReceiveSocket.send(forwardingPacket);
 
-                        sendReceiveSocket = new DatagramSocket();
-                        sendReceiveSocket.send(forwardingPacket);
+				// Receive response from server
+				data = new byte[100];
+				forwardingPacket = new DatagramPacket(data, data.length);
 
-                        // Receive response from server
-                        data = new byte[100];
-                        forwardingPacket = new DatagramPacket(data, data.length);
+				sendReceiveSocket.receive(forwardingPacket);
 
-                        sendReceiveSocket.receive(forwardingPacket);
+				//print information
+				printInfo(forwardingPacket);
 
-                        //print information
-                        printInfo(forwardingPacket);
+				/* insert statement to check for server sent ack or server sent data and chosen packet*/
+				if ((choice == 1 || choice == 3 || !(choice == 2 && type == typeChosen && packetNo == chosenPacket)) && side == 2) {
 
-			  /* insert statement to check for server sent ack or server sent data and chosen packet*/
-                        if ((choice == 1 || choice == 3 || !(choice == 2 && type == typeChosen && packetNo == chosenPacket)) && side == 2) {
+				    if (choice == 3 && type == typeChosen && packetNo == chosenPacket && side == 2 && packetNo == chosenPacket) {
+					wait(delay);
+				    }
+				    // Forward response to client
+				    forwardingPacket = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), clientAddress, clientPort);
+				    sendReceiveSocket.send(forwardingPacket);
 
-                            if (choice == 3 && type == typeChosen && packetNo == chosenPacket && side == 2 && packetNo == chosenPacket) {
-                                wait(delay);
-                            }
-                            // Forward response to client
-                            forwardingPacket = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), clientAddress, clientPort);
-                            sendReceiveSocket.send(forwardingPacket);
-
-                            //print out sent datagram
-                            System.out.println("Intermediate: Packet sending:");
-                            System.out.println("String: " + new String(forwardingPacket.getData(), 0, forwardingPacket.getLength()));
-                            System.out.println("Bytes: " + forwardingPacket.getData());
-                        }
-                    }
+				    //print out sent datagram
+				    System.out.println("Intermediate: Packet sending:");
+				    System.out.println("String: " + new String(forwardingPacket.getData(), 0, forwardingPacket.getLength()));
+				    System.out.println("Bytes: " + forwardingPacket.getData());
+				}
+			    }
+		    }
 
                 }
 
