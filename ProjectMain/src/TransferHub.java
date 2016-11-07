@@ -243,31 +243,38 @@ public class TransferHub {
         //reads from the file and returns it in byte form
         public byte[] read(int blocks) throws FileNotFoundException, IOException, SecurityException
         {
-            BufferedInputStream in = new BufferedInputStream(new FileInputStream(fileName));
-
-            byte[] dataRead = new byte[blocks];
-
-            in.skip((long) location);
-            if((bytesRead = in.read(dataRead)) != -1)
-            {
-                location += bytesRead;
-            }
-            else
-            {
-                location = 0;
-                bytesRead = 0;
-            }
-
-            in.close();
-
-            if(bytesRead < blocks)
-            {
-                System.out.println("Fixing array information... ");
-                byte dataReadTrim[] = Arrays.copyOf(dataRead, bytesRead);
-                return dataReadTrim;
-            }
-
-            return dataRead;
+        	try {
+	            BufferedInputStream in = new BufferedInputStream(new FileInputStream(fileName));
+	
+	            byte[] dataRead = new byte[blocks];
+	
+	            in.skip((long) location);
+	            if((bytesRead = in.read(dataRead)) != -1)
+	            {
+	                location += bytesRead;
+	            }
+	            else
+	            {
+	                location = 0;
+	                bytesRead = 0;
+	            }
+	
+	            in.close();
+	
+	            if(bytesRead < blocks)
+	            {
+	                System.out.println("Fixing array information... ");
+	                byte dataReadTrim[] = Arrays.copyOf(dataRead, bytesRead);
+	                return dataReadTrim;
+	            }
+	
+	            return dataRead;
+        	} catch (FileNotFoundException e){
+        		String errorMessage = String.format("File not found.");
+                System.out.println(errorMessage);
+        	}
+        	return new byte[0];
+        	//add send error packet
         }
 
         //writes to the file
@@ -292,11 +299,6 @@ public class TransferHub {
 
                         System.out.println(errorMessage);
                         cAndSendError(sock, "Access violation.", 2, port);
-                    } else if (e.getMessage().contains("No such file or directory")) {
-                        String errorMessage = String.format("File not found on the %s", commonErrorMssg);
-
-                        System.out.println(errorMessage);
-                        cAndSendError(sock, "File not found.", 1, port);
                     }
                     e.printStackTrace();
                     return false;
