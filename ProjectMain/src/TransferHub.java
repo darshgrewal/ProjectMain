@@ -220,6 +220,9 @@ public class TransferHub {
          
         System.out.println("Host ID: " + packet.getAddress() + " recieved on port number " + packet.getPort());
         System.out.println("The length of the packet:  " + packetLength);
+        // Form a String from the byte array.
+        int block = packet.getData()[3];
+        System.out.println("Block Number: " + block + "\n");
         System.out.println("Containing " + new String(fileInfo,0,packetLength));
         System.out.println("Information in byte form: " + Arrays.toString(fileInfo) + "\n");
     }
