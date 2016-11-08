@@ -1,4 +1,5 @@
 import java.net.*;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Intermediate implements Runnable {
@@ -11,7 +12,7 @@ public class Intermediate implements Runnable {
 
     public Intermediate() {
         try {
-            receiveSocket = new DatagramSocket(23);
+            receiveSocket = new DatagramSocket(2268);
         } catch (SocketException e) {
             e.printStackTrace();
         }
@@ -23,6 +24,8 @@ public class Intermediate implements Runnable {
         String side = "";
         int delay = 0;
         int choice = 0;
+        int clientPort;
+        int serverPort = 2269;
         Boolean verbose;
 
         //TODO: maybe we need different packet numbers based on ack or data type
@@ -80,13 +83,13 @@ public class Intermediate implements Runnable {
             	
                 addThread();
                 //create packet for recieving
-                byte data[] = new byte[100];
+                byte data[] = new byte[516];
                 DatagramPacket forwardingPacket = new DatagramPacket(data, data.length);
 
                 // Receive packet from client
                 receiveSocket.receive(forwardingPacket);
-                InetAddress clientAddress = forwardingPacket.getAddress();
-                int clientPort = forwardingPacket.getPort();
+                InetAddress clientAddress = receiveSocket.getInetAddress();
+                clientPort = forwardingPacket.getPort();
 
                 //Process the received datagram.
                 if (verbose) {
@@ -105,7 +108,7 @@ public class Intermediate implements Runnable {
                     type = "error";
                 }
                 
-                packetNo = ((forwardingPacket.getData()[1] & (byte)0xff) << 8) | (forwardingPacket.getData()[1] & (byte)0xff);
+                //packetNo = ((forwardingPacket.getData()[1] & (byte)0xff) << 8) | (forwardingPacket.getData()[1] & (byte)0xff);vv
                 
               
                 /* insert statement to check for client sent ack or client sent data or request and chosen packet*/
@@ -115,15 +118,14 @@ public class Intermediate implements Runnable {
                     if (choice == 3 && type == typeChosen && packetNo == chosenPacket && side.equals("client")) {
                         wait(delay);
                     }
-					  
+					
+                    
 					// Forward packet to server
-					forwardingPacket = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), InetAddress.getLocalHost(), 69);
+					forwardingPacket = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), InetAddress.getLocalHost(), serverPort);
 	
 					//print out packet sent
 					if (verbose) {
-						System.out.println("Intermediate: Packet sending:");
-						System.out.println("String: " + new String(forwardingPacket.getData(), 0, forwardingPacket.getLength()));
-						System.out.println("Bytes: " + forwardingPacket.getData());
+						printInfo(forwardingPacket);
 					}
 	
 					sendReceiveSocket = new DatagramSocket();
@@ -135,28 +137,32 @@ public class Intermediate implements Runnable {
 				    }
 	
 					// Receive response from server
-					data = new byte[100];
-					forwardingPacket = new DatagramPacket(data, data.length);
-	
+					data = new byte[516];
+					forwardingPacket = new DatagramPacket(data, data.length);	
 					sendReceiveSocket.receive(forwardingPacket);
+					serverPort = forwardingPacket.getPort();
 	
 					//print information
 					if (verbose) {
 						printInfo(forwardingPacket);
 					}
-					
+					int servLength = 0;
 					//check for type again
 					if (forwardingPacket.getData()[1] == 1 || forwardingPacket.getData()[1] == 2) {
 	                    type = "request";
-	                } else if (forwardingPacket.getData()[1] == 3) {
-	                    packetNo++;
-	                    type = "ack";
+	                    servLength = 4;
 	                } else if (forwardingPacket.getData()[1] == 4) {
 	                    packetNo++;
+	                    type = "ack";
+	                    servLength = 4;
+	                } else if (forwardingPacket.getData()[1] == 3) {
+	                    packetNo++;
 	                    type = "data";
+	                    servLength = forwardingPacket.getData().length;
 	                } else if (forwardingPacket.getData()[1] == 5) {
 	                    packetNo++;
 	                    type = "error";
+	                    servLength = 4;
 	                }
 	
 					/* insert statement to check for server sent ack or server sent data and chosen packet*/
@@ -167,20 +173,18 @@ public class Intermediate implements Runnable {
 					    }
 					    
 					    // Forward response to client
-					    forwardingPacket = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), clientAddress, clientPort);
-					    sendReceiveSocket.send(forwardingPacket);
+					    DatagramPacket forwarding2Packet = new DatagramPacket(forwardingPacket.getData(), servLength, InetAddress.getLocalHost(), clientPort);
+					    receiveSocket.send(forwarding2Packet);
 					    
 					    //if choice is to duplicate this particular packet, send again
 					    if (choice == 4 && type == typeChosen && packetNo == chosenPacket && side.equals("server")) {
-					    	sendReceiveSocket.send(forwardingPacket);
+					    	sendReceiveSocket.send(forwarding2Packet);
 					    }
 					    
 					    
 					    //print out sent datagram
 					    if (verbose) {
-						    System.out.println("Intermediate: Packet sending:");
-						    System.out.println("String: " + new String(forwardingPacket.getData(), 0, forwardingPacket.getLength()));
-						    System.out.println("Bytes: " + forwardingPacket.getData());
+							printInfo(forwarding2Packet);
 					    }
 					}
 
@@ -198,16 +202,12 @@ public class Intermediate implements Runnable {
     public void printInfo(DatagramPacket x) {
 
         // Process the received datagram.
-        System.out.println("Intermediate:");
-        System.out.println("Host: " + x.getAddress());
-        System.out.println("Host port: " + x.getPort());
-        int len = x.getLength();
-        System.out.println("Length: " + len);
-        System.out.print("Containing: ");
-
+        System.out.println("\n:");
+        System.out.println("Host: " + x.getAddress() + " To port: " + x.getPort());
+        System.out.println("Length: " + x.getLength());
         // Form a String from the byte array.
-        System.out.println("String: " + new String(x.getData(), 0, len));
-        System.out.println("Bytes: " + x.getData());
+        System.out.println("Containing " + new String(x.getData(),0,(x.getData()).length));
+        System.out.println("Information in byte form: " + Arrays.toString(x.getData()) + "\n");
 
     }
 
