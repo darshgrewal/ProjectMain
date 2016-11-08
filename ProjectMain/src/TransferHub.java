@@ -57,7 +57,7 @@ public class TransferHub {
             } catch (Exception e) {
                 return;
             }
-             
+            
             byte aByte[] = byteArrayCreater(aT, blockbyte);
              
             sendBytes(socket, dataPacket.getPort(), aByte);
@@ -130,26 +130,29 @@ public class TransferHub {
 					cAndSendError(socket, "Access violation.", 2, pNumber);
 				} else if (e.getMessage().contains("No such file or directory")) {
                     String errorMessage = String.format("File not found on the %s", commonErrorMssg);
-
-                    System.out.println(errorMessage);
                     cAndSendError(socket, "File not found.", 1, pNumber);
                 }
+				
+				
 
                 e.printStackTrace();
                 return;
             }
-             
-            fileInfo = byteArrayCreater(dataBlockInfo, newB);
-            fileInfo = byteArrayCreater(fileInfo, dataBInfo);
-             
-            sendBytes(socket, pNumber, fileInfo);
+            if (!(dataBInfo == null)){
+	            fileInfo = byteArrayCreater(dataBlockInfo, newB);
+	            fileInfo = byteArrayCreater(fileInfo, dataBInfo);
+	            sendBytes(socket, pNumber, fileInfo);
+            } else {
+            	cAndSendError(socket,"\nError: File not found.", 1, pNumber);
+            }
              
             fileInfo = new byte[SIZEB];
             DatagramPacket ack = new DatagramPacket(fileInfo, fileInfo.length);
             clientRequest(socket, ack);
 
             if (checkA(ack.getData(), newB)) {
-
+            	
+            	
                 if (newB[1] < 255) newB[1]++;
                 else if (newB[1] == 255 && newB[0] < 255) newB[0]++;
                 else {
@@ -169,7 +172,7 @@ public class TransferHub {
     //creates an byte array that will be sent over to the client
     public byte[] byteArrayCreater(byte[] source, byte[] goingB)
     {
-         
+    	//System.out.println("\n\n\n\ngoingB = " + goingB + "\n\n\n\n" );
         int size = source.length+ goingB.length;
         byte[] finalBA = new byte[size];
         System.arraycopy(source, 0, finalBA, 0, source.length);
@@ -265,8 +268,8 @@ public class TransferHub {
         	} catch (FileNotFoundException e){
         		String errorMessage = String.format("File not found.");
                 System.out.println(errorMessage);
+                return null;
         	}
-        	return new byte[0];
         	//add send error packet
         }
 
@@ -275,7 +278,7 @@ public class TransferHub {
             FileOutputStream out = null;
             File find = new File(fileName);
             int blockNo;
-            blockNo = ((blockbyte[0] & (byte)0xff) << 8) | (blockbyte[1] & (byte)0xff);
+            blockNo = ((blockbyte[0] & (byte)0xff) << 8) | (blockbyte[1] & (byte)0xff) & 0xff;
 
             if(find.exists() && blockNo <= 1){
             	System.out.println(blockNo);
