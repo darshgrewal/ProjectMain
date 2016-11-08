@@ -206,6 +206,8 @@ public class Intermediate implements Runnable {
         System.out.println("Host: " + x.getAddress() + " To port: " + x.getPort());
         System.out.println("Length: " + x.getLength());
         // Form a String from the byte array.
+        int block = x.getData()[3];
+        System.out.println("Block Number: " + block + "\n");
         System.out.println("Containing " + new String(x.getData(),0,(x.getData()).length));
         System.out.println("Information in byte form: " + Arrays.toString(x.getData()) + "\n");
 
