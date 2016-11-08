@@ -1,6 +1,3 @@
-//TransferHub Class
-//deals with most of the recieve and tranfer functions needed for the server to operate
- 
 import java.net.*;
 import java.util.*;
 import java.io.*;
@@ -55,7 +52,7 @@ public class TransferHub {
             byte dblock[] = Arrays.copyOfRange(dataPacket.getData(), 4, dataPacket.getLength());
              
             try {
-                if(! newFile.write(dblock, socket, dataPacket.getPort(), callerId))
+                if(! newFile.write(dblock, socket, dataPacket.getPort(), callerId, blockbyte))
                     return;
             } catch (Exception e) {
                 return;
@@ -244,25 +241,21 @@ public class TransferHub {
         public byte[] read(int blocks) throws FileNotFoundException, IOException, SecurityException
         {
         	try {
-	            BufferedInputStream in = new BufferedInputStream(new FileInputStream(fileName));
-	
+	            BufferedInputStream in = new BufferedInputStream(new FileInputStream(fileName));	
 	            byte[] dataRead = new byte[blocks];
 	
 	            in.skip((long) location);
-	            if((bytesRead = in.read(dataRead)) != -1)
-	            {
+	            
+	            if ((bytesRead = in.read(dataRead)) != -1) {
 	                location += bytesRead;
-	            }
-	            else
-	            {
+	            } else {
 	                location = 0;
 	                bytesRead = 0;
 	            }
 	
 	            in.close();
 	
-	            if(bytesRead < blocks)
-	            {
+	            if(bytesRead < blocks) {
 	                System.out.println("Fixing array information... ");
 	                byte dataReadTrim[] = Arrays.copyOf(dataRead, bytesRead);
 	                return dataReadTrim;
@@ -278,25 +271,25 @@ public class TransferHub {
         }
 
         //writes to the file
-        public boolean write(byte[] info, DatagramSocket sock, int port, int callerId) throws IOException {
+        public boolean write(byte[] info, DatagramSocket sock, int port, int callerId, byte[] blockbyte) throws IOException {
             FileOutputStream out = null;
             File find = new File(fileName);
+            int blockNo;
+            blockNo = ((blockbyte[0] & (byte)0xff) << 8) | (blockbyte[1] & (byte)0xff);
 
-            if(find.exists()){
+            if(find.exists() && blockNo <= 1){
+            	System.out.println(blockNo);
                 String commonErrorMssg = callerId == SERVER? "server for WRQ." : "client for RRQ.";
                 String errorMessage = String.format("File already exists error happened on the %s", commonErrorMssg);
-
                 System.out.println(errorMessage);
                 cAndSendError(sock, "File already exists.", 6, port);
-            }
-            else {
+            } else {
                 try {
                     out = new FileOutputStream(fileName, true);
-                } catch (IOException e) {
+                } catch (IOException e) {                	
                     String commonErrorMssg = callerId == SERVER? "server for WRQ." : "client for RRQ.";
                     if (e.getMessage().contains("Permission denied")) {
-                        String errorMessage = String.format("Access Violation happened on the %s", commonErrorMssg);
-
+                        String errorMessage = String.format("Access Violation happened on the %s", commonErrorMssg);                        
                         System.out.println(errorMessage);
                         cAndSendError(sock, "Access violation.", 2, port);
                     }
