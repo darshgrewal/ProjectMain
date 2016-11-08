@@ -1,4 +1,3 @@
-import java.io.*;
 import java.net.*;
 import java.util.Scanner;
 
@@ -73,6 +72,7 @@ public class Intermediate implements Runnable {
             System.out.print("Choose to implement error for server or client:");
             side = scan.next();
         }
+        scan.close();
 
         while (true) {
         	
@@ -105,7 +105,8 @@ public class Intermediate implements Runnable {
                     type = "error";
                 }
                 
-                packetNo = forwardingPacket.getData()[3];
+                packetNo = ((forwardingPacket.getData()[1] & (byte)0xff) << 8) | (forwardingPacket.getData()[1] & (byte)0xff);
+                
               
                 /* insert statement to check for client sent ack or client sent data or request and chosen packet*/
                 //TODO: looks like: if user chooses side 2 (server) this if condition is not satisfied and the first packet (from client to server) is never delivered. Make sure if the packets don't match user specified criteria, the packet forwarding is working fine!
@@ -191,6 +192,7 @@ public class Intermediate implements Runnable {
                 e.printStackTrace();
             }
         }
+        
     }
 
     public void printInfo(DatagramPacket x) {
