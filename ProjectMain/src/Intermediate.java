@@ -204,6 +204,18 @@ public class Intermediate implements Runnable {
         System.out.println("Length: " + x.getLength());
         // Form a String from the byte array.
         int block = x.getData()[3];
+        int packType = x.getData()[1];
+        if (packType == 1) {
+        	System.out.println("Type: Read Request Packet");
+        } else if (packType == 2) {
+        	System.out.println("Type: Write Request Packet");
+        } else if (packType == 3) {
+        	System.out.println("Type: Data Packet");
+        } else if (packType == 4) {
+        	System.out.println("Type: ACK Packet");
+        } else if (packType == 5) {
+        	System.out.println("Type: Error Packet");
+        }
         System.out.println("Block Number: " + block);
         System.out.println("Containing " + new String(x.getData(),0,(x.getData()).length));
         System.out.println("Information in byte form: " + Arrays.toString(x.getData()));
