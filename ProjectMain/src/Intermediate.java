@@ -88,7 +88,7 @@ public class Intermediate implements Runnable {
 
                 // Receive packet from client
                 receiveSocket.receive(forwardingPacket);
-                InetAddress clientAddress = receiveSocket.getInetAddress();
+                InetAddress clientAddress = forwardingPacket.getAddress();
                 clientPort = forwardingPacket.getPort();
 
                 //Process the received datagram.
@@ -97,26 +97,28 @@ public class Intermediate implements Runnable {
                 }
                 if (forwardingPacket.getData()[1] == 1 || forwardingPacket.getData()[1] == 2) {
                     type = "request";
+                    packetNo = forwardingPacket.getData()[3];
                 } else if (forwardingPacket.getData()[1] == 3) {
-                    packetNo++;
-                    type = "ack";
-                } else if (forwardingPacket.getData()[1] == 4) {
-                    packetNo++;
                     type = "data";
+                    packetNo = forwardingPacket.getData()[3];
+                } else if (forwardingPacket.getData()[1] == 4) {
+                    type = "ack";
+                    packetNo = forwardingPacket.getData()[3];
                 } else if (forwardingPacket.getData()[1] == 5) {
-                    packetNo++;
                     type = "error";
+                    packetNo = forwardingPacket.getData()[3];
                 }
                 
-                //packetNo = ((forwardingPacket.getData()[1] & (byte)0xff) << 8) | (forwardingPacket.getData()[1] & (byte)0xff);vv
+                //make packetNo unsigned? not sure how
+                //packetNo = ((forwardingPacket.getData()[1] & (byte)0xff) << 8) | (forwardingPacket.getData()[1] & (byte)0xff)
                 
               
                 /* insert statement to check for client sent ack or client sent data or request and chosen packet*/
                 //TODO: looks like: if user chooses side 2 (server) this if condition is not satisfied and the first packet (from client to server) is never delivered. Make sure if the packets don't match user specified criteria, the packet forwarding is working fine!
-                if (!(choice == 2 && type == typeChosen && packetNo == chosenPacket && side.equals("client"))) {
+                if (!(choice == 2 && type.equals(typeChosen)  && packetNo == chosenPacket && side.equals("client"))) {
 
-                    if (choice == 3 && type == typeChosen && packetNo == chosenPacket && side.equals("client")) {
-                        wait(delay);
+                    if (choice == 3 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("client")) {
+                        Thread.sleep(delay);
                     }
 					
                     
@@ -150,30 +152,31 @@ public class Intermediate implements Runnable {
 					//check for type again
 					if (forwardingPacket.getData()[1] == 1 || forwardingPacket.getData()[1] == 2) {
 	                    type = "request";
-	                    servLength = 4;
+	                    servLength = 516;
+	                    packetNo = forwardingPacket.getData()[3];
+	                } else if (forwardingPacket.getData()[1] == 3) {
+	                    type = "data";
+	                    servLength = 516;	                    
+	                    packetNo = forwardingPacket.getData()[3];
 	                } else if (forwardingPacket.getData()[1] == 4) {
-	                    packetNo++;
 	                    type = "ack";
 	                    servLength = 4;
-	                } else if (forwardingPacket.getData()[1] == 3) {
-	                    packetNo++;
-	                    type = "data";
-	                    servLength = forwardingPacket.getData().length;
+	                    packetNo = forwardingPacket.getData()[3];
 	                } else if (forwardingPacket.getData()[1] == 5) {
-	                    packetNo++;
 	                    type = "error";
 	                    servLength = 4;
+	                    packetNo = forwardingPacket.getData()[3];
 	                }
 	
 					/* insert statement to check for server sent ack or server sent data and chosen packet*/
-					if (!(choice == 2 && type == typeChosen && packetNo == chosenPacket && side.equals("server"))) {
+					if (!(choice == 2 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("server"))) {
 	
 					    if (choice == 3 && type == typeChosen && packetNo == chosenPacket && side.equals("server") && packetNo == chosenPacket) {
-					    	wait(delay);
+	                        Thread.sleep(delay);
 					    }
 					    
 					    // Forward response to client
-					    DatagramPacket forwarding2Packet = new DatagramPacket(forwardingPacket.getData(), servLength, InetAddress.getLocalHost(), clientPort);
+					    DatagramPacket forwarding2Packet = new DatagramPacket(forwardingPacket.getData(), servLength, clientAddress, clientPort);
 					    receiveSocket.send(forwarding2Packet);
 					    
 					    //if choice is to duplicate this particular packet, send again
