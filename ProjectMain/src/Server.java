@@ -1,6 +1,3 @@
-//Main server class
-//holds the main
-
 import java.net.SocketException;
 import java.io.File;
 import java.net.DatagramPacket;
@@ -23,6 +20,7 @@ public class Server extends TransferHub implements Runnable{
 	public Boolean holder = true; 		//boolean value which decides whether server should keep checking for incoming requests
 	private DatagramPacket rPacket;  	//datagram packet for the server
 	private DatagramSocket rSocket;		//datagram socket for the server
+	int threads = 0;
 	
 	public Server()
 	{
@@ -75,8 +73,9 @@ public class Server extends TransferHub implements Runnable{
 		
 			this.rPacket = new DatagramPacket(dByte, dByte.length);
 			this.clientRequest(this.rSocket, this.rPacket);
+			this.addThread();
 			
-			Thread serverX = new Thread (new AssistantC(this.rPacket.getPort(), this.rPacket.getData()));
+			Thread serverX = new Thread (new AssistantC(this.rPacket.getPort(), this.rPacket.getData(),this));
 			
 			serverX.start();
 		}
@@ -97,4 +96,16 @@ public class Server extends TransferHub implements Runnable{
 		Thread endServer = new Thread (new CloseServer(startServer));
 		endServer.start();
 	}
+	
+	public void addThread() {
+        threads++;
+    }
+
+    public void removeThread() {
+        threads--;
+    }
+    
+    public int getThreads() {
+    	return threads;
+    }
 }
