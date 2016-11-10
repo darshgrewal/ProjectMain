@@ -1,7 +1,12 @@
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.net.DatagramPacket;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Client extends TransferHub
@@ -53,6 +58,26 @@ public class Client extends TransferHub
 			
 			System.out.print("Enter file name you want to use: ");
 			String fName = scan.next();
+			if (choice == 2) {
+				while (true) {
+					try {
+			            FileInputStream test = new FileInputStream(System.getProperty("user.dir") + "\\client\\" + fName);
+			            break;
+		        	} catch (IOException e){
+		            	if (e.getMessage().contains("Access is denied")) {
+		            		//working error handler for access denied in client
+		            		System.out.println("Access is denied. Enter valid filename.");
+			        		System.out.print("Enter file name you want to use: ");
+			    			fName = scan.next();;
+		            	} else {
+		            		//working error handler for file not found on client
+			        		System.out.println("File not found. Enter valid filename.");
+			        		System.out.print("Enter file name you want to use: ");
+			    			fName = scan.next();;
+		            	}
+		        	}
+				}				
+			}
 
 			String x = "octet";
 			
