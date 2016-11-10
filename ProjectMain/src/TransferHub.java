@@ -52,7 +52,7 @@ public class TransferHub {
             byte dblock[] = Arrays.copyOfRange(dataPacket.getData(), 4, dataPacket.getLength());
              
             try {
-                if(! newFile.write(dblock, socket, dataPacket.getPort(), callerId, blockbyte))
+                if(!newFile.write(dblock, socket, dataPacket.getPort(), callerId, blockbyte))
                     return;
             } catch (Exception e) {
                 return;
@@ -62,12 +62,12 @@ public class TransferHub {
              
             sendBytes(socket, dataPacket.getPort(), aByte);
              
-            System.out.println("Finish");
+            //System.out.println("Finish");
              
             //once the file is been completely received, it states it in the console
             if (dblock.length < SIZEDB){
                  
-                System.out.println("Done receiving packet...");
+                System.out.println("Done receiving File...");
                 //breaks out of the inner loop
                 break;
                  
@@ -121,28 +121,27 @@ public class TransferHub {
             //throws an exception if file cannot be sent
             try {
                 dataBInfo = newFile.read(SIZEDB);
-            } catch (SecurityException | IOException e) {
+            } catch (SecurityException e) {
                 String commonErrorMssg = callerId == SERVER? "server for RRQ." : "client for WRQ.";
 				if (e.getMessage().contains("Permission denied")) {
                     String errorMessage = String.format("Access Violation happened on the %s", commonErrorMssg);
-
                     System.out.println(errorMessage);
 					cAndSendError(socket, "Access violation.", 2, pNumber);
-				} else if (e.getMessage().contains("No such file or directory")) {
-                    String errorMessage = String.format("File not found on the %s", commonErrorMssg);
-                    cAndSendError(socket, "File not found.", 1, pNumber);
-                }
-				
-				
-
-                e.printStackTrace();
+				}
                 return;
-            }
+            } catch (IOException e){
+            	if (e.getMessage().contains("Access is denied")) {
+            		//working error handler for access denied in server
+					cAndSendError(socket, "Access is Denied.", 2, pNumber);
+					break;
+				}
+        	}
+            
             if (!(dataBInfo == null)){
 	            fileInfo = byteArrayCreater(dataBlockInfo, newB);
 	            fileInfo = byteArrayCreater(fileInfo, dataBInfo);
 	            sendBytes(socket, pNumber, fileInfo);
-            } else {
+            } else {//working error handler for file not found on server
             	cAndSendError(socket,"\nError: File not found.", 1, pNumber);
             }
              
@@ -268,10 +267,13 @@ public class TransferHub {
 	            }
 	
 	            return dataRead;
-        	} catch (FileNotFoundException e){
-        		String errorMessage = String.format("File not found.");
-                System.out.println(errorMessage);
-                return null;
+        	} //catch (FileNotFoundException e){
+        		//String errorMessage = String.format("File not found.");
+                //System.out.println(errorMessage);
+                //return null;
+        	//}
+        	finally {
+        		
         	}
         	//add send error packet
         }
@@ -284,6 +286,7 @@ public class TransferHub {
             blockNo = ((blockbyte[0] & (byte)0xff) << 8) | (blockbyte[1] & (byte)0xff) & 0xff;
 
             if(find.exists() && blockNo <= 1){
+            	//working error handler for file already exists
             	System.out.println(blockNo);
                 String commonErrorMssg = callerId == SERVER? "server for WRQ." : "client for RRQ.";
                 String errorMessage = String.format("File already exists error happened on the %s", commonErrorMssg);
@@ -310,7 +313,6 @@ public class TransferHub {
             } catch (SyncFailedException e) {
                 String commonErrorMssg = callerId == SERVER? "server for WRQ." : "client for RRQ.";
                 String errorMessage = String.format("Disk full happened on the %s", commonErrorMssg);
-
                 System.out.println(errorMessage);
                 cAndSendError(sock, "Disk full or allocation exceeded.", 3, port);
                 out.close();
@@ -322,16 +324,16 @@ public class TransferHub {
                 String commonErrorMssg = callerId == SERVER? "server for WRQ." : "client for RRQ.";
                 if (e.getMessage().contains("Permission denied")) {
                     String errorMessage = String.format("Access Violation happened on the %s", commonErrorMssg);
-
                     System.out.println(errorMessage);
                     cAndSendError(sock, "Access violation.", 2, port);
                 } else if (e.getMessage().contains("No such file or directory")) {
                     String errorMessage = String.format("File not found on the %s", commonErrorMssg);
-
                     System.out.println(errorMessage);
-                    cAndSendError(sock, "File not found.", 1, port);
+                    //cAndSendError(sock, "File not found.", 1, port);
+                } else if (e.getMessage().contains("There is not enough space on the disk")) {
+                	//working disk is full error handler for server and client
+                	cAndSendError(sock, "Disk is full.", 3, port);
                 }
-                e.printStackTrace();
                 return false;
             }
             out.close();
@@ -340,3 +342,4 @@ public class TransferHub {
 
     }
 }
+
