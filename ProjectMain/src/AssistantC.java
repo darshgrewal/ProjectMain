@@ -9,15 +9,17 @@ public class AssistantC extends TransferHub implements Runnable{
     DatagramPacket SendPacket;
     DatagramSocket SendSocket;
     byte [] fileinfo = new byte [512];
+    int threads;
     int pnum;
+    Server listener;
   
      
-    public AssistantC(int Port, byte [] Data){
+    public AssistantC(int Port, byte [] Data, Server x){
         try {
+        	listener = x;
             SendSocket = new DatagramSocket();
             fileinfo = Data;
-            pnum = Port;
-              
+            pnum = Port;              
         }catch(SocketException se){
             se.printStackTrace();
             System.exit(1);
@@ -118,6 +120,7 @@ public class AssistantC extends TransferHub implements Runnable{
             } else if (req[0] == "Read"){
                 sendFile(requestSocket, port, "Server/" + req[1], SERVER);
             }
+            listener.removeThread();
             requestSocket.close();
         } catch (SocketException e) {
             e.printStackTrace();
@@ -129,5 +132,6 @@ public class AssistantC extends TransferHub implements Runnable{
         reqHandle(this.fileinfo, this.pnum);
         SendSocket.close();
     }
-      
+    
+          
 }
