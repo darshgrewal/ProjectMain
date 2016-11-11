@@ -19,7 +19,7 @@ public class TransferHub {
         try {
             rSocket.receive(rPacket);
              
-            rPacket.setData(Arrays.copyOfRange(rPacket.getData(), 0, rPacket.getLength()));
+            //rPacket.setData(Arrays.copyOfRange(rPacket.getData(), 0, rPacket.getLength()));
             //client recieves the notification that packet has reached it from the server
             System.out.println("Host: The packet has been received.");
             Utils.printInfo(rPacket);
@@ -195,12 +195,9 @@ public class TransferHub {
 
         int expectedBlockNo = Utils.getBlockNo(block);
         int receivedBlockNo = Utils.getBlockNo(fileInfo);
-        receivedBlockNo = (int) (receivedBlockNo & (-1L >>> 32));
 
         if (fileInfo[0] == 0 && fileInfo[1] == 4) { // data is ack
             if (receivedBlockNo < expectedBlockNo) {
-            	System.out.println(receivedBlockNo);
-            	System.out.println(expectedBlockNo);
                 return AckType.DUPLICATE;
             } else {
                 return AckType.FRESH;
