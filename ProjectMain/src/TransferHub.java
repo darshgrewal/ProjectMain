@@ -19,7 +19,7 @@ public class TransferHub {
         try {
             rSocket.receive(rPacket);
              
-//            rPacket.setData(Arrays.copyOfRange(rPacket.getData(), 0, rPacket.getLength()));
+            rPacket.setData(Arrays.copyOfRange(rPacket.getData(), 0, rPacket.getLength()));
             //client recieves the notification that packet has reached it from the server
             System.out.println("Host: The packet has been received.");
             Utils.printInfo(rPacket);
@@ -153,6 +153,7 @@ public class TransferHub {
 
             while (checkAckType(ack.getData(), newB) == AckType.DUPLICATE) {
                 clientRequest(socket, ack);
+                System.out.println("DUPLICATE");
             }
 
             if (checkAckType(ack.getData(), newB) == AckType.FRESH) {
@@ -194,12 +195,16 @@ public class TransferHub {
 
         int expectedBlockNo = Utils.getBlockNo(block);
         int receivedBlockNo = Utils.getBlockNo(fileInfo);
+        receivedBlockNo = (int) (receivedBlockNo & (-1L >>> 32));
 
         if (fileInfo[0] == 0 && fileInfo[1] == 4) { // data is ack
-            if (receivedBlockNo < expectedBlockNo)
+            if (receivedBlockNo < expectedBlockNo) {
+            	System.out.println(receivedBlockNo);
+            	System.out.println(expectedBlockNo);
                 return AckType.DUPLICATE;
-            else
+            } else {
                 return AckType.FRESH;
+            }
         }
          
         return AckType.ERROR;
@@ -302,8 +307,10 @@ public class TransferHub {
                         String errorMessage = String.format("Access Violation happened on the %s", commonErrorMssg);                        
                         System.out.println(errorMessage);
                         cAndSendError(sock, "Access violation.", 2, port);
-                    }
-                    e.printStackTrace();
+                    } else if (e.getMessage().contains("Access is denied")) {
+                		//working error handler for access denied in server
+    					cAndSendError(sock, "Access is Denied.", 2, port);
+    				}
                     return false;
                 }
             }
