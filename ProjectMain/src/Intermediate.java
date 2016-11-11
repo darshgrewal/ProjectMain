@@ -1,5 +1,4 @@
 import java.net.*;
-import java.util.Arrays;
 import java.util.Scanner;
 
 public class Intermediate implements Runnable {
@@ -87,26 +86,21 @@ public class Intermediate implements Runnable {
 
                 //Process the received datagram.
                 if (verbose) {
-                	printInfo(forwardingPacket);
+                	Utils.printInfo(forwardingPacket);
                 }
+
+                packetNo = Utils.getBlockNo(forwardingPacket);
+
                 if (forwardingPacket.getData()[1] == 1 || forwardingPacket.getData()[1] == 2) {
                     type = "request";
-                    packetNo = forwardingPacket.getData()[3]+forwardingPacket.getData()[4];
                 } else if (forwardingPacket.getData()[1] == 3) {
                     type = "data";
-                    packetNo = forwardingPacket.getData()[3]+forwardingPacket.getData()[4];
                 } else if (forwardingPacket.getData()[1] == 4) {
                     type = "ack";
-                    packetNo = forwardingPacket.getData()[3]+forwardingPacket.getData()[4];
                 } else if (forwardingPacket.getData()[1] == 5) {
                     type = "error";
-                    packetNo = forwardingPacket.getData()[3]+forwardingPacket.getData()[4];
                 }
                 
-                //make packetNo unsigned? not sure how
-                //packetNo = ((forwardingPacket.getData()[1] & (byte)0xff) << 8) | (forwardingPacket.getData()[1] & (byte)0xff)
-                
-              
                 /* insert statement to check for client sent ack or client sent data or request and chosen packet*/
                 if (!(choice == 2 && type.equals(typeChosen)  && packetNo == chosenPacket && side.equals("client"))) {
 
@@ -119,7 +113,7 @@ public class Intermediate implements Runnable {
 	
 					//print out packet sent
 					if (verbose) {
-						printInfo(forwardingPacket);
+						Utils.printInfo(forwardingPacket);
 					}
 					
 					//create sending socket and send packet
@@ -140,26 +134,24 @@ public class Intermediate implements Runnable {
 	
 					//print information
 					if (verbose) {
-						printInfo(forwardingPacket);
+						Utils.printInfo(forwardingPacket);
 					}
-					
+
+                    packetNo = Utils.getBlockNo(forwardingPacket);
+
 					//check for type again
 					if (forwardingPacket.getData()[1] == 1 || forwardingPacket.getData()[1] == 2) {
 	                    type = "request";
 	                    servLength = 516;
-	                    packetNo = forwardingPacket.getData()[3]+forwardingPacket.getData()[4];
 	                } else if (forwardingPacket.getData()[1] == 3) {
 	                    type = "data";
 	                    servLength = 516;	                    
-	                    packetNo = forwardingPacket.getData()[3]+forwardingPacket.getData()[4];
 	                } else if (forwardingPacket.getData()[1] == 4) {
 	                    type = "ack";
 	                    servLength = 4;
-	                    packetNo = forwardingPacket.getData()[3]+forwardingPacket.getData()[4];
 	                } else if (forwardingPacket.getData()[1] == 5) {
 	                    type = "error";
 	                    servLength = 4;
-	                    packetNo = forwardingPacket.getData()[3]+forwardingPacket.getData()[4];
 	                }
 	
 					/* insert statement to check for server sent ack or server sent data and chosen packet*/
@@ -182,7 +174,7 @@ public class Intermediate implements Runnable {
 					    
 					    //print out sent datagram
 					    if (verbose) {
-							printInfo(forwarding2Packet);
+							Utils.printInfo(forwarding2Packet);
 					    }
 					}
 
@@ -197,32 +189,6 @@ public class Intermediate implements Runnable {
         
     }
 
-    public void printInfo(DatagramPacket x) {
-
-        // Process the received datagram.
-        System.out.println("\nHost: " + x.getAddress() + " port: " + x.getPort());
-        System.out.println("Length: " + x.getLength());
-        // Form a String from the byte array.
-        int block = x.getData()[3];
-        int packType = x.getData()[1];
-        if (packType == 1) {
-        	System.out.println("Type: Read Request Packet");
-        } else if (packType == 2) {
-        	System.out.println("Type: Write Request Packet");
-        } else if (packType == 3) {
-        	System.out.println("Type: Data Packet");
-        } else if (packType == 4) {
-        	System.out.println("Type: ACK Packet");
-        } else if (packType == 5) {
-        	System.out.println("Type: Error Packet");
-        }
-        System.out.println("Block Number: " + block);
-        System.out.println("Containing " + new String(x.getData(),0,(x.getData()).length));
-        System.out.println("Information in byte form: " + Arrays.toString(x.getData()));
-
-    }
-
-    
     public void addThread() {
         threads++;
     }

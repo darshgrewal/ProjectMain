@@ -11,16 +11,18 @@ public class TransferHub {
     public final int SERVER = 0;
     public final int CLIENT = 1;
 
+    private enum AckType {ERROR, FRESH, DUPLICATE }
+
     //creates a receive request to send to the main server class, creating the socket and packet to hold the info
     public void clientRequest(DatagramSocket rSocket, DatagramPacket rPacket)
     {
         try {
             rSocket.receive(rPacket);
              
-            rPacket.setData(Arrays.copyOfRange(rPacket.getData(), 0, rPacket.getLength()));
+//            rPacket.setData(Arrays.copyOfRange(rPacket.getData(), 0, rPacket.getLength()));
             //client recieves the notification that packet has reached it from the server
             System.out.println("Host: The packet has been received.");
-            displayInfo(rPacket, rPacket.getData());
+            Utils.printInfo(rPacket);
         //checks for an input output exception  
         } catch (IOException inoutE){
             inoutE.printStackTrace();
@@ -87,7 +89,7 @@ public class TransferHub {
             System.out.println("Client: Packet is being sent");
              
             //prints all the information in the packet that is being sent
-            displayInfo(sendDataP, msg);
+            Utils.printInfo(sendDataP);
              
             try {
                 sendingS.send(sendDataP);
@@ -149,11 +151,17 @@ public class TransferHub {
             DatagramPacket ack = new DatagramPacket(fileInfo, fileInfo.length);
             clientRequest(socket, ack);
 
-            if (checkA(ack.getData(), newB)) {
-            	
-            	
+            while (checkAckType(ack.getData(), newB) == AckType.DUPLICATE) {
+                clientRequest(socket, ack);
+            }
+
+            if (checkAckType(ack.getData(), newB) == AckType.FRESH) {
+
                 if (newB[1] < 255) newB[1]++;
-                else if (newB[1] == 255 && newB[0] < 255) newB[0]++;
+                else if (newB[1] == 255 && newB[0] < 255) {
+                    newB[0]++;
+                    newB[1] = 0;
+                }
                 else {
                     newB[0] = 0;
                     newB[1] = 1;
@@ -180,14 +188,21 @@ public class TransferHub {
         return finalBA;
     }
      
-    //checks to see if the data is ACK or ERROR
-    private boolean checkA(byte[] fileInfo, byte[] block) {
+    //checks to see if the data is ACK or ERROR. If the data is ack, is it duplicate or not
+    private AckType checkAckType(byte[] fileInfo, byte[] block) {
         //checks to see if it is 0 4 0 1
-        if (fileInfo[0] == 0 && fileInfo[1] == 4 && fileInfo[2] == block[0] && fileInfo[3] == block[1]) {
-            return true;
+
+        int expectedBlockNo = Utils.getBlockNo(block);
+        int receivedBlockNo = Utils.getBlockNo(fileInfo);
+
+        if (fileInfo[0] == 0 && fileInfo[1] == 4) { // data is ack
+            if (receivedBlockNo < expectedBlockNo)
+                return AckType.DUPLICATE;
+            else
+                return AckType.FRESH;
         }
          
-        return false;
+        return AckType.ERROR;
     }
      
  
@@ -211,19 +226,6 @@ public class TransferHub {
         msg = byteArrayCreater(msg, new byte[]{0});
 
         sendBytes(socket, pNumber, msg);
-    }
-
-    //prints the file information
-    protected void displayInfo(DatagramPacket packet, byte[] fileInfo){
-        int packetLength = packet.getLength();
-         
-        System.out.println("Host ID: " + packet.getAddress() + " recieved on port number " + packet.getPort());
-        System.out.println("The length of the packet:  " + packetLength);
-        // Form a String from the byte array.
-        int block = packet.getData()[3];
-        System.out.println("Block Number: " + block + "\n");
-        System.out.println("Containing " + new String(fileInfo,0,packetLength));
-        System.out.println("Information in byte form: " + Arrays.toString(fileInfo) + "\n");
     }
 
 //combined class with other group members
@@ -282,8 +284,7 @@ public class TransferHub {
         public boolean write(byte[] info, DatagramSocket sock, int port, int callerId, byte[] blockbyte) throws IOException {
             FileOutputStream out = null;
             File find = new File(fileName);
-            int blockNo;
-            blockNo = ((blockbyte[0] & (byte)0xff) << 8) | (blockbyte[1] & (byte)0xff) & 0xff;
+            int blockNo = Utils.getBlockNo(blockbyte);
 
             if(find.exists() && blockNo <= 1){
             	//working error handler for file already exists

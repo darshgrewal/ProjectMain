@@ -1,12 +1,9 @@
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.net.DatagramPacket;
-import java.util.Arrays;
 import java.util.Scanner;
 
 public class Client extends TransferHub
@@ -73,7 +70,7 @@ public class Client extends TransferHub
 		            		//working error handler for file not found on client
 			        		System.out.println("File not found. Enter valid filename.");
 			        		System.out.print("Enter file name you want to use: ");
-			    			fName = scan.next();;
+			    			fName = scan.next();
 		            	}
 		        	}
 				}				
