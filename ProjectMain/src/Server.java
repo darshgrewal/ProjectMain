@@ -72,11 +72,10 @@ public class Server extends TransferHub implements Runnable{
 			byte dByte[] = new byte[this.SIZEB];
 		
 			this.rPacket = new DatagramPacket(dByte, dByte.length);
-			this.clientRequest(this.rSocket, this.rPacket);
+			this.clientRequest(this.rSocket, this.rPacket, "server");
 			this.addThread();
 			
-			Thread serverX = new Thread (new AssistantC(this.rPacket.getPort(), this.rPacket.getData(),this));
-			
+			Thread serverX = new Thread (new AssistantC(this.rPacket.getPort(), this.rPacket.getData(),this));			
 			serverX.start();
 		}
 	}
