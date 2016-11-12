@@ -91,9 +91,8 @@ public class Client extends TransferHub
 			} else if (message[1] == 2) {	//WRQ
 				message = new byte[SIZEB];
 				DatagramPacket receivePacket = new DatagramPacket(message, message.length);
-				if (!clientRequest(socketSR, receivePacket,"req")) {
+				while (!clientRequest(socketSR, receivePacket,"req")) {
 					System.out.println("TimeoutOccured");
-					break;
 	        	}
 				//clientRequest(socketSR, receivePacket);
 				
