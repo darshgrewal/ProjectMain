@@ -7,8 +7,16 @@ public class Utils {
     }
 
     public static int getBlockNo(byte[] packet) {
-        int MSB = packet.length - 2;
-        int LSB = packet.length - 1;
+        int MSB;
+        int LSB;
+        if(packet.length > 4) {
+            MSB = 2;
+            LSB = 3;
+        } else {
+            MSB = packet.length - 2;
+            LSB = packet.length - 1;
+        }
+
         return ((packet[MSB] & 0xFF) * 256) + (packet[LSB] & 0xFF);
     }
 
@@ -35,7 +43,7 @@ public class Utils {
         }
         System.out.println("Block Number: " + block);
         System.out.println("Containing " + new String(packet.getData(),0,packetLength));
-        System.out.println("Information in byte form: " + Arrays.toString(packet.getData()));
+        System.out.println("Information in byte form: " + Arrays.toString(Arrays.copyOfRange(packet.getData(), 0, packetLength)));
 
     }
 
