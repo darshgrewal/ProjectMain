@@ -49,6 +49,8 @@ public class TransferHub {
     //stores them in a file of the users choice
  
     public void getFile(DatagramSocket socket, String fName, int callerId){
+    	
+    	int timeouts = 0;
          
         //holds the message that will be sent over
         byte[] fileInfo = new byte[SIZEB];
@@ -59,10 +61,10 @@ public class TransferHub {
         InOut newFile = new InOut(fName);
          
         while (true) {
-        	if (!clientRequest(socket, dataPacket, "req")) {
-				cAndSendError(socket, "Timeout Occured.", 0, callerId);
+        	while (!clientRequest(socket, dataPacket, "req")) {
 				break;
         	}
+        	
             // if received packet is an error no need to continue
             if (!checkD(dataPacket.getData())) {
                 break;
@@ -166,16 +168,14 @@ public class TransferHub {
              
             fileInfo = new byte[SIZEB];
             DatagramPacket ack = new DatagramPacket(fileInfo, fileInfo.length);
-            if (!clientRequest(socket, ack,"req")) {
+            while (!clientRequest(socket, ack,"req")) {
 				cAndSendError(socket, "Timeout Occured.", 0, callerId);
-				break;
         	}
             //clientRequest(socket, ack);
 
             while (checkAckType(ack.getData(), newB) == AckType.DUPLICATE) {
-            	if (!clientRequest(socket, ack,"req")) {
+            	while (!clientRequest(socket, ack,"req")) {
     				cAndSendError(socket, "Timeout Occured.", 0, callerId);
-    				break;
             	}
                 //clientRequest(socket, ack);
                 System.out.println("DUPLICATE");
