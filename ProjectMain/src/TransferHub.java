@@ -21,7 +21,7 @@ public class TransferHub {
     	boolean normal = false;
     	while (!normal) {
 	        try {
-	        	rSocket.setSoTimeout(2000);
+	        	rSocket.setSoTimeout(6000);
 	            rSocket.receive(rPacket);
 	            //rPacket.setData(Arrays.copyOfRange(rPacket.getData(), 0, rPacket.getLength()));
 	            //client recieves the notification that packet has reached it from the server
