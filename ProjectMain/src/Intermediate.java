@@ -14,6 +14,7 @@ public class Intermediate implements Runnable {
     }
 
     public void run() {
+    	boolean skipped = false;
         String typeChosen = null;
         String side = null;
         String type = null;
@@ -88,8 +89,8 @@ public class Intermediate implements Runnable {
                 if (verbose) {
                 	Utils.printInfo(forwardingPacket);
                 }
-
-                packetNo = Utils.getBlockNo(forwardingPacket);
+                
+            	packetNo = Utils.getBlockNo(forwardingPacket);
 
                 if (forwardingPacket.getData()[1] == 1 || forwardingPacket.getData()[1] == 2) {
                     type = "request";
@@ -108,6 +109,7 @@ public class Intermediate implements Runnable {
                         Thread.sleep(delay);
                     }					
                     
+                    
 					// Forward packet to server
 					forwardingPacket = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), InetAddress.getLocalHost(), serverPort);
 	
@@ -125,59 +127,66 @@ public class Intermediate implements Runnable {
 						System.out.println("\nSending out duplicate packet\n");
 						sendReceiveSocket.send(forwardingPacket);
 				    }
+					
+					
+					while (true) {
+						// Receive response from server
+						data = new byte[516];
+						forwardingPacket = new DatagramPacket(data, data.length);	
+						sendReceiveSocket.receive(forwardingPacket);
+						serverPort = forwardingPacket.getPort();
+		
+						//print information
+						if (verbose) {
+							Utils.printInfo(forwardingPacket);
+						}
 	
-					// Receive response from server
-					data = new byte[516];
-					forwardingPacket = new DatagramPacket(data, data.length);	
-					sendReceiveSocket.receive(forwardingPacket);
-					serverPort = forwardingPacket.getPort();
+	                    packetNo = Utils.getBlockNo(forwardingPacket);
+	                    servLength = forwardingPacket.getLength();
 	
-					//print information
-					if (verbose) {
-						Utils.printInfo(forwardingPacket);
-					}
+						//check for type again
+						if (forwardingPacket.getData()[1] == 1 || forwardingPacket.getData()[1] == 2) {
+		                    type = "request";
+		                } else if (forwardingPacket.getData()[1] == 3) {
+		                    type = "data";
+		                } else if (forwardingPacket.getData()[1] == 4) {
+		                    type = "ack";
+		                } else if (forwardingPacket.getData()[1] == 5) {
+		                    type = "error";
+		                }
 
-                    packetNo = Utils.getBlockNo(forwardingPacket);
-                    servLength = forwardingPacket.getLength();
-
-					//check for type again
-					if (forwardingPacket.getData()[1] == 1 || forwardingPacket.getData()[1] == 2) {
-	                    type = "request";
-	                } else if (forwardingPacket.getData()[1] == 3) {
-	                    type = "data";
-	                } else if (forwardingPacket.getData()[1] == 4) {
-	                    type = "ack";
-	                } else if (forwardingPacket.getData()[1] == 5) {
-	                    type = "error";
-	                }
+						/* insert statement to check for server sent ack or server sent data and chosen packet*/
+						if (!(choice == 2 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("server"))) {
+		
+						    if (choice == 3 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("server")) {
+		                        Thread.sleep(delay);
+						    }
 	
-					/* insert statement to check for server sent ack or server sent data and chosen packet*/
-					if (!(choice == 2 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("server"))) {
-	
-					    if (choice == 3 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("server")) {
-	                        Thread.sleep(delay);
-					    }
-
-					    // Forward response to client
-					    DatagramPacket forwarding2Packet = new DatagramPacket(forwardingPacket.getData(), servLength, clientAddress, clientPort);
-					    receiveSocket.send(forwarding2Packet);
-					    
-					    //if choice is to duplicate this particular packet, send again
-					    if (choice == 4 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("server")) {
-							System.out.println("\nSending out duplicate packet\n");
-					    	sendReceiveSocket.send(forwarding2Packet);
-					    }
-					    
-					    
-					    //print out sent datagram
-					    if (verbose) {
-							Utils.printInfo(forwarding2Packet);
-					    }
+						    // Forward response to client
+						    DatagramPacket forwarding2Packet = new DatagramPacket(forwardingPacket.getData(), servLength, clientAddress, clientPort);
+						    receiveSocket.send(forwarding2Packet);
+						    
+						    //if choice is to duplicate this particular packet, send again
+						    if (choice == 4 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("server")) {
+								System.out.println("\nSending out duplicate packet\n");
+						    	sendReceiveSocket.send(forwarding2Packet);
+						    }
+						    
+						    
+						    //print out sent datagram
+						    if (verbose) {
+								Utils.printInfo(forwarding2Packet);
+						    }
+						    break;
+						}
 					}
 
                 }
-                removeThread();
-                stop(sendReceiveSocket);
+                if (!(choice == 2 && type.equals(typeChosen)  && packetNo == chosenPacket && side.equals("client"))) {
+	                removeThread();
+	                stop(sendReceiveSocket);
+	                choice = 1;
+                }
 
             } catch(Exception e){
                 e.printStackTrace();
