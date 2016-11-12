@@ -16,35 +16,40 @@ public class TransferHub {
     private enum AckType {ERROR, FRESH, DUPLICATE }
 
     //creates a receive request to send to the main server class, creating the socket and packet to hold the info
-    public boolean clientRequest(DatagramSocket rSocket, DatagramPacket rPacket) throws SocketTimeoutException
+    public boolean clientRequest(DatagramSocket rSocket, DatagramPacket rPacket, String type)
     {
-        try {
-        	rSocket.setSoTimeout(2000);
-            rSocket.receive(rPacket);
-            
-             
-            //rPacket.setData(Arrays.copyOfRange(rPacket.getData(), 0, rPacket.getLength()));
-            //client recieves the notification that packet has reached it from the server
-            System.out.println("Host: The packet has been received.");
-            Utils.printInfo(rPacket);
-        } catch (SocketTimeoutException e){
-        	return false;
-        } catch (IOException inoutE){
-            inoutE.printStackTrace();
-            //exits if it is found
-            System.exit(1);
-        }
-        
-        return true;
+    	boolean normal = false;
+    	while (!normal) {
+	        try {
+	        	rSocket.setSoTimeout(2000);
+	            rSocket.receive(rPacket);
+	            //rPacket.setData(Arrays.copyOfRange(rPacket.getData(), 0, rPacket.getLength()));
+	            //client recieves the notification that packet has reached it from the server
+	            System.out.println("Host: The packet has been received.");
+	            Utils.printInfo(rPacket);
+	            normal = true;
+	        } catch (SocketTimeoutException e){
+	        	if (type.equals("server")) {
+	        	} else {
+	        		System.out.println("Timeout cccured.");
+	        		return false;
+	        	}
+		        	
+	        } catch (IOException inoutE){
+	            inoutE.printStackTrace();
+	            //exits if it is found
+	            System.exit(1);
+	        }
+    	}
+
+    	return true;
     }
      
-    //class handles the files that being sent over from the client
+  //class handles the files that being sent over from the client
     //stores them in a file of the users choice
  
     public void getFile(DatagramSocket socket, String fName, int callerId){
-    	int numTO = 0;
-    	//checks the block number
-    	int numB = 1;
+         
         //holds the message that will be sent over
         byte[] fileInfo = new byte[SIZEB];
         //the packet in which the message will be sent in
@@ -52,65 +57,41 @@ public class TransferHub {
          
         byte aT[] = new byte[]{0, 4};
         InOut newFile = new InOut(fName);
-        
-        boolean sockTO = false;
          
-        while (numTO<5)
-        	sockTO = false;
-        
-        	try {
-        		sockTO = !clientRequest(socket, dataPacket);
-        	} catch (SocketTimeoutException e) {
-            // TODO Auto-generated catch block
+        while (true) {
+        	if (!clientRequest(socket, dataPacket, "req")) {
+				cAndSendError(socket, "Timeout Occured.", 0, callerId);
+				break;
         	}
-	        while (true) {
-	        	try {
-	        		clientRequest(socket, dataPacket);
-	        	} catch (SocketTimeoutException e) {
-	            // TODO Auto-generated catch block
-	        	}
-	        	
-	        	
-	            // if received packet is an error no need to continue
-	            if (!checkD(dataPacket.getData())) {
-	                break;
-	            }
-	            byte blockbyte[] = Arrays.copyOfRange(dataPacket.getData(), 2, 4);
-	            byte dblock[] = Arrays.copyOfRange(dataPacket.getData(), 4, dataPacket.getLength());
-	             
-	            try {
-	                if(!newFile.write(dblock, socket, dataPacket.getPort(), callerId, blockbyte))
-	                    return;
-	            } catch (Exception e) {
-	                return;
-	            }
-	            
-	            byte aByte[] = byteArrayCreater(aT, blockbyte);
-	             
-	            sendBytes(socket, dataPacket.getPort(), aByte);
-	            
-	            if (sockTO){
-	                numTO++;
-	                System.out.println("Error: A socket timeout occured, time out number:" + numTO+"\n");
-	                if(numB == 1)
-	                {
-	                    System.out.println("Attempting to send the packet again");
-	                    sendBytes(socket, dataPacket.getPort(), aByte);
-	                }
-	                continue;
-	            }
-	             
-	            //System.out.println("Finish");
-	             
-	            //once the file is been completely received, it states it in the console
-	            if (dblock.length < SIZEDB){
-	                 
-	                System.out.println("Done receiving File...");
-	                //breaks out of the inner loop
-	                break;
-	                 
-	            }
-	        }
+            // if received packet is an error no need to continue
+            if (!checkD(dataPacket.getData())) {
+                break;
+            }
+            byte blockbyte[] = Arrays.copyOfRange(dataPacket.getData(), 2, 4);
+            byte dblock[] = Arrays.copyOfRange(dataPacket.getData(), 4, dataPacket.getLength());
+             
+            try {
+                if(!newFile.write(dblock, socket, dataPacket.getPort(), callerId, blockbyte))
+                    return;
+            } catch (Exception e) {
+                return;
+            }
+            
+            byte aByte[] = byteArrayCreater(aT, blockbyte);
+             
+            sendBytes(socket, dataPacket.getPort(), aByte);
+             
+            //System.out.println("Finish");
+             
+            //once the file is been completely received, it states it in the console
+            if (dblock.length < SIZEDB){
+                 
+                System.out.println("Done receiving File...");
+                //breaks out of the inner loop
+                break;
+                 
+            }
+        }
          
     }
      
@@ -152,8 +133,6 @@ public class TransferHub {
          
         byte[] newB = new byte[]{0,1};
          
-        boolean sockTO = false;
-        int numTO = 0;
         //while the byte is still getting info from the file on its server
         while (true) {
             byte[] dataBInfo = null;
@@ -187,36 +166,23 @@ public class TransferHub {
              
             fileInfo = new byte[SIZEB];
             DatagramPacket ack = new DatagramPacket(fileInfo, fileInfo.length);
-            try {
-                sockTO= !clientRequest(socket, ack);
-           } catch (SocketTimeoutException e) {
-               // TODO Auto-generated catch block
-           }
+            if (!clientRequest(socket, ack,"req")) {
+				cAndSendError(socket, "Timeout Occured.", 0, callerId);
+				break;
+        	}
+            //clientRequest(socket, ack);
 
             while (checkAckType(ack.getData(), newB) == AckType.DUPLICATE) {
-            	try {
-                     sockTO= !clientRequest(socket, ack);
-                } catch (SocketTimeoutException e) {
-                    // TODO Auto-generated catch block
-                }
+            	if (!clientRequest(socket, ack,"req")) {
+    				cAndSendError(socket, "Timeout Occured.", 0, callerId);
+    				break;
+            	}
+                //clientRequest(socket, ack);
                 System.out.println("DUPLICATE");
             }
-            while(sockTO){
-                if(numTO >= 5) break;
-                
-                numTO++;
-                System.out.println("Timeout has occured, waiting for another ACK...");
-                
-                sendBytes(socket, pNumber, fileInfo);
-                
-                try {
-                    sockTO = !clientRequest(socket, ack);
-                } catch (SocketTimeoutException e) {
-                    // TODO Auto-generated catch block
-                }
-            }
-
+            
             pNumber = ack.getPort();
+
             if (checkAckType(ack.getData(), newB) == AckType.FRESH) {
 
                 if (newB[1] < 255) newB[1]++;
@@ -235,7 +201,6 @@ public class TransferHub {
             } else { // received error packet instead of ack
                 break;
             }
-            
         }
     }
      
@@ -409,5 +374,3 @@ public class TransferHub {
 
     }
 }
-
-
