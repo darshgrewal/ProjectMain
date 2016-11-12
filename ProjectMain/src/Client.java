@@ -59,6 +59,7 @@ public class Client extends TransferHub
 				while (true) {
 					try {
 			            FileInputStream test = new FileInputStream(System.getProperty("user.dir") + "\\client\\" + fName);
+			            test.close();
 			            break;
 		        	} catch (IOException e){
 		            	if (e.getMessage().contains("Access is denied")) {
@@ -90,7 +91,11 @@ public class Client extends TransferHub
 			} else if (message[1] == 2) {	//WRQ
 				message = new byte[SIZEB];
 				DatagramPacket receivePacket = new DatagramPacket(message, message.length);
-				clientRequest(socketSR, receivePacket);
+				if (!clientRequest(socketSR, receivePacket,"req")) {
+					System.out.println("TimeoutOccured");
+					break;
+	        	}
+				//clientRequest(socketSR, receivePacket);
 				
 				if (receivePacket.getData()[0] == 0 &&
 						receivePacket.getData()[1] == 4 &&
