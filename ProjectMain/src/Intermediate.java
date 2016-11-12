@@ -138,20 +138,17 @@ public class Intermediate implements Runnable {
 					}
 
                     packetNo = Utils.getBlockNo(forwardingPacket);
+                    servLength = forwardingPacket.getLength();
 
 					//check for type again
 					if (forwardingPacket.getData()[1] == 1 || forwardingPacket.getData()[1] == 2) {
 	                    type = "request";
-	                    servLength = 516;
 	                } else if (forwardingPacket.getData()[1] == 3) {
 	                    type = "data";
-	                    servLength = 516;	                    
 	                } else if (forwardingPacket.getData()[1] == 4) {
 	                    type = "ack";
-	                    servLength = 4;
 	                } else if (forwardingPacket.getData()[1] == 5) {
 	                    type = "error";
-	                    servLength = 4;
 	                }
 	
 					/* insert statement to check for server sent ack or server sent data and chosen packet*/
@@ -160,7 +157,7 @@ public class Intermediate implements Runnable {
 					    if (choice == 3 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("server")) {
 	                        Thread.sleep(delay);
 					    }
-					    
+
 					    // Forward response to client
 					    DatagramPacket forwarding2Packet = new DatagramPacket(forwardingPacket.getData(), servLength, clientAddress, clientPort);
 					    receiveSocket.send(forwarding2Packet);

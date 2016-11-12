@@ -216,6 +216,7 @@ public class TransferHub {
                 }
             }
 
+            pNumber = ack.getPort();
             if (checkAckType(ack.getData(), newB) == AckType.FRESH) {
 
                 if (newB[1] < 255) newB[1]++;
