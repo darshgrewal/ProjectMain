@@ -14,21 +14,26 @@ public class TransferHub {
     private enum AckType {ERROR, FRESH, DUPLICATE }
 
     //creates a receive request to send to the main server class, creating the socket and packet to hold the info
-    public void clientRequest(DatagramSocket rSocket, DatagramPacket rPacket)
+    public boolean clientRequest(DatagramSocket rSocket, DatagramPacket rPacket)
     {
         try {
+        	rSocket.setSoTimeout(2000);
             rSocket.receive(rPacket);
+            
              
             //rPacket.setData(Arrays.copyOfRange(rPacket.getData(), 0, rPacket.getLength()));
             //client recieves the notification that packet has reached it from the server
             System.out.println("Host: The packet has been received.");
             Utils.printInfo(rPacket);
-        //checks for an input output exception  
+        } catch (SocketTimeoutException e){
+        	return false;
         } catch (IOException inoutE){
             inoutE.printStackTrace();
             //exits if it is found
             System.exit(1);
         }
+        
+        return true;
     }
      
     //class handles the files that being sent over from the client
