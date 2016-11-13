@@ -62,7 +62,6 @@ public class TransferHub {
          
         while (true) {
         	while (!clientRequest(socket, dataPacket, "req")) {
-				break;
         	}
         	
             // if received packet is an error no need to continue
@@ -169,15 +168,14 @@ public class TransferHub {
             fileInfo = new byte[SIZEB];
             DatagramPacket ack = new DatagramPacket(fileInfo, fileInfo.length);
             while (!clientRequest(socket, ack,"req")) {
-				cAndSendError(socket, "Timeout Occured.", 0, callerId);
+            	fileInfo = byteArrayCreater(dataBlockInfo, newB);
+	            fileInfo = byteArrayCreater(fileInfo, dataBInfo);
+	            sendBytes(socket, pNumber, fileInfo);
         	}
-            //clientRequest(socket, ack);
 
             while (checkAckType(ack.getData(), newB) == AckType.DUPLICATE) {
             	while (!clientRequest(socket, ack,"req")) {
-    				cAndSendError(socket, "Timeout Occured.", 0, callerId);
             	}
-                //clientRequest(socket, ack);
                 System.out.println("DUPLICATE");
             }
             
