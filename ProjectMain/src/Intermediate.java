@@ -75,7 +75,7 @@ public class Intermediate implements Runnable {
         	
             try {
             	
-            	System.out.println("YOYYOYOY");
+            	
                 addThread();
                 //create packet for recieving
                 byte data[] = new byte[516];
@@ -154,12 +154,15 @@ public class Intermediate implements Runnable {
 		                } else if (forwardingPacket.getData()[1] == 5) {
 		                    type = "error";
 		                }					
-
-						System.out.println(choice);
-						System.out.println(typeChosen);
-						System.out.println(packetNo);
-						System.out.println(chosenPacket);
-						System.out.println(side);
+						
+						//uncomment for testing
+						//System.out.println(choice);
+						//System.out.println(typeChosen);
+						//System.out.println(packetNo);
+						//System.out.println(chosenPacket);
+						//System.out.println(side);
+						
+						
 						/* insert statement to check for server sent ack or server sent data and chosen packet*/
 						if (!(choice == 2 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("server"))) {
 		
