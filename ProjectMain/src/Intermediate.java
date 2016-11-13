@@ -75,6 +75,7 @@ public class Intermediate implements Runnable {
         	
             try {
             	
+            	System.out.println("YOYYOYOY");
                 addThread();
                 //create packet for recieving
                 byte data[] = new byte[516];
@@ -104,11 +105,10 @@ public class Intermediate implements Runnable {
                 
                 /* insert statement to check for client sent ack or client sent data or request and chosen packet*/
                 if (!(choice == 2 && type.equals(typeChosen)  && packetNo == chosenPacket && side.equals("client"))) {
-
+                	
                     if (choice == 3 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("client")) {
                         Thread.sleep(delay);
                     }					
-                    
                     
 					// Forward packet to server
 					forwardingPacket = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), InetAddress.getLocalHost(), serverPort);
@@ -153,8 +153,13 @@ public class Intermediate implements Runnable {
 		                    type = "ack";
 		                } else if (forwardingPacket.getData()[1] == 5) {
 		                    type = "error";
-		                }
+		                }					
 
+						System.out.println(choice);
+						System.out.println(typeChosen);
+						System.out.println(packetNo);
+						System.out.println(chosenPacket);
+						System.out.println(side);
 						/* insert statement to check for server sent ack or server sent data and chosen packet*/
 						if (!(choice == 2 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("server"))) {
 		
@@ -178,14 +183,19 @@ public class Intermediate implements Runnable {
 								Utils.printInfo(forwarding2Packet);
 						    }
 						    break;
+						} else {
+							System.out.println("LOST THE PACKET");
+							choice = 1;
 						}
 					}
 
                 }
-                if (!(choice == 2 && type.equals(typeChosen)  && packetNo == chosenPacket && side.equals("client"))) {
+                if ((choice == 2 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("client"))) {
+                	choice = 1;
+                }
+                if ((choice == 2 && type.equals(typeChosen)  && packetNo == chosenPacket && side.equals("client"))) {
 	                removeThread();
 	                stop(sendReceiveSocket);
-	                choice = 1;
                 }
 
             } catch(Exception e){
