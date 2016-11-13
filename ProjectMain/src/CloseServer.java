@@ -5,14 +5,12 @@ public class CloseServer implements Runnable {
       
     private Scanner in = new Scanner(System.in);
     private Server EndServer;
-    private Boolean done;
       
     public CloseServer(Server x){
         EndServer = x;
     }
       
     public void run(){
-    	done = false;
         while(true){
             System.out.println("To close server, please enter 'close'.");
             getTextInfo(in.next());
