@@ -95,6 +95,7 @@ public class Client extends TransferHub
 					System.out.println("TimeoutOccured");
 	        	}
 				//clientRequest(socketSR, receivePacket);
+				//cAndSendError(socket, "Timeout Occured.", 0, callerId);
 				
 				if (receivePacket.getData()[0] == 0 &&
 						receivePacket.getData()[1] == 4 &&
