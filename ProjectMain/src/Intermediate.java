@@ -164,7 +164,8 @@ public class Intermediate implements Runnable {
 						if (!(choice == 2 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("server"))) {
 		
 						    if (choice == 3 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("server")) {
-		                        Thread.sleep(delay);
+		                        		choice = 1;
+							Thread.sleep(delay);
 						    }
 	
 						    // Forward response to client
