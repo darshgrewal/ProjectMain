@@ -58,7 +58,7 @@ public class Client extends TransferHub
 			if (choice == 2) {
 				while (true) {
 					try {
-			            FileInputStream test = new FileInputStream(System.getProperty("user.dir") + "\\client\\" + fName);
+			            FileInputStream test = new FileInputStream(System.getProperty("user.dir") + "/client/" + fName);
 			            test.close();
 			            break;
 		        	} catch (IOException e){

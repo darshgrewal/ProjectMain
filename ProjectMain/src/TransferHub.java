@@ -1,11 +1,10 @@
 import java.net.*;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.*;
 import java.io.*;
- 
+
 public class TransferHub {
-     
+
     //the size values shouldn't change so they were made final variables
     public final int SIZEB = 516;
     public final int SIZEDB = 512;
@@ -13,7 +12,7 @@ public class TransferHub {
     public final int SERVER = 0;
     public final int CLIENT = 1;
 
-    private enum AckType {ERROR, FRESH, DUPLICATE }
+    private enum ReceivedType {ERROR, FRESH, DUPLICATE }
 
     //creates a receive request to send to the main server class, creating the socket and packet to hold the info
     public boolean clientRequest(DatagramSocket rSocket, DatagramPacket rPacket, String type)
@@ -21,20 +20,20 @@ public class TransferHub {
     	boolean normal = false;
     	while (!normal) {
 	        try {
-	        	rSocket.setSoTimeout(6000);
+	        	rSocket.setSoTimeout(3000);
 	            rSocket.receive(rPacket);
 	            //rPacket.setData(Arrays.copyOfRange(rPacket.getData(), 0, rPacket.getLength()));
 	            //client recieves the notification that packet has reached it from the server
 	            System.out.println("Host: The packet has been received.");
-	            Utils.printInfo(rPacket);
+	            Utils.printInfo(rPacket, Utils.RECEIVE);
 	            normal = true;
 	        } catch (SocketTimeoutException e){
 	        	if (type.equals("server")) {
 	        	} else {
-	        		System.out.println("Timeout cccured.");
+	        		System.out.println("Timeout occured.");
 	        		return false;
 	        	}
-		        	
+
 	        } catch (IOException inoutE){
 	            inoutE.printStackTrace();
 	            //exits if it is found
@@ -44,88 +43,74 @@ public class TransferHub {
 
     	return true;
     }
-     
+
   //class handles the files that being sent over from the client
     //stores them in a file of the users choice
- 
+    // Need to send the ack even if the packet is duplicate. The duplicate ack is handled by the transmitter.
     public void getFile(DatagramSocket socket, String fName, int callerId){
-    	
-    	int timeouts = 0;
-        byte[] newB = new byte[]{0,1};
-         
+
+        int expectedPacketNo = 1;
+
         //holds the message that will be sent over
         byte[] fileInfo = new byte[SIZEB];
         //the packet in which the message will be sent in
         DatagramPacket dataPacket = new DatagramPacket(fileInfo, fileInfo.length);
-         
+
         byte aT[] = new byte[]{0, 4};
         InOut newFile = new InOut(fName);
-                 
+
         while (true) {
     		while (!clientRequest(socket, dataPacket, "req")) {
         	}
-        	
+
+            ReceivedType receivedPacketType = checkPacketType(dataPacket.getData(),expectedPacketNo);
             // if received packet is an error no need to continue
-            if (checkD(dataPacket.getData(),newB) == AckType.DUPLICATE) {
-                System.out.println("Duplicate occured. Ignoring packet.");
-            } else {
-	            byte blockbyte[] = Arrays.copyOfRange(dataPacket.getData(), 2, 4);
-	            byte dblock[] = Arrays.copyOfRange(dataPacket.getData(), 4, dataPacket.getLength());
-	             
-	            try {
-	                if(!newFile.write(dblock, socket, dataPacket.getPort(), callerId, blockbyte))
-	                    return;
-	            } catch (Exception e) {
-	                return;
-	            }
-	            
-	            byte aByte[] = byteArrayCreater(aT, blockbyte);
-	             
-	            sendBytes(socket, dataPacket.getPort(), aByte);
-	             
-	            //System.out.println("Finish");
-	            
-	            if (checkD(dataPacket.getData(), newB) == AckType.FRESH) {
-	
-	                if (newB[1] < 255) newB[1]++;
-	                else if (newB[1] == 255 && newB[0] < 255) {
-	                    newB[0]++;
-	                    newB[1] = 0;
-	                }
-	                else {
-	                    newB[0] = 0;
-	                    newB[1] = 1;
-	                }
-	            } else { // received error packet instead of ack
-	                break;
-	            }
-	             
-	            //once the file is been completely received, it states it in the console
-	            if (dblock.length < SIZEDB){
-	                 
-	                System.out.println("Done receiving File...");
-	                //breaks out of the inner loop
-	                break;
-	                 
-	            }
+            byte blockbyte[] = Arrays.copyOfRange(dataPacket.getData(), 2, 4);
+            byte dblock[] = Arrays.copyOfRange(dataPacket.getData(), 4, dataPacket.getLength());
+
+            if (receivedPacketType == ReceivedType.FRESH) {
+                expectedPacketNo++;
+                try {
+                    if (!newFile.write(dblock, socket, dataPacket.getPort(), callerId, blockbyte))
+                        return;
+                } catch (Exception e) {
+                    return;
+                }
+            } else if (receivedPacketType == ReceivedType.DUPLICATE) {
+                System.out.println("Received a duplicated packet, hence not writing to the file.");
+            } else if (receivedPacketType == ReceivedType.ERROR){ // received error packet instead of ack
+                break;
+            }
+
+            byte aByte[] = byteArrayCreater(aT, blockbyte);
+
+            sendBytes(socket, dataPacket.getPort(), aByte);
+
+            //once the file is been completely received, it states it in the console
+            if (dblock.length < SIZEDB){
+
+                System.out.println("Done receiving File...");
+                //breaks out of the inner loop
+                break;
+
             }
         }
-         
+
     }
-     
+
     //called when you need to send a datapacket to the client
     public void sendBytes(DatagramSocket sendingS, int pNumber, byte[] msg)
-    {       
+    {
         DatagramPacket sendDataP;
         // send data
         try {
             sendDataP = new DatagramPacket(msg, msg.length, InetAddress.getLocalHost(), pNumber);
-             
+
             System.out.println("Client: Packet is being sent");
-             
+
             //prints all the information in the packet that is being sent
-            Utils.printInfo(sendDataP);
-             
+            Utils.printInfo(sendDataP, Utils.SEND);
+
             try {
                 sendingS.send(sendDataP);
             } catch (IOException e) {
@@ -138,23 +123,23 @@ public class TransferHub {
             System.exit(1);
         }
     }
-     
+
     //in charge of sending the file over to the client
     //the file that is needed is passed in and then transferred over from the server folder to the client
     public void sendFile(DatagramSocket socket, int pNumber, String fName, int callerId)
     {
         byte[] fileInfo;
-         
+
         InOut newFile = new InOut(fName);
-         
+
         byte[] dataBlockInfo = new byte[]{0, 3};
-         
+
         byte[] newB = new byte[]{0,1};
-         
+
         //while the byte is still getting info from the file on its server
         while (true) {
             byte[] dataBInfo = null;
-             
+
             //throws an exception if file cannot be sent
             try {
                 dataBInfo = newFile.read(SIZEDB);
@@ -173,32 +158,44 @@ public class TransferHub {
 					break;
 				}
         	}
-            
+
             if (!(dataBInfo == null)){
 	            fileInfo = byteArrayCreater(dataBlockInfo, newB);
 	            fileInfo = byteArrayCreater(fileInfo, dataBInfo);
-	            sendBytes(socket, pNumber, fileInfo);
+                sendBytes(socket, pNumber, fileInfo);
             } else {//working error handler for file not found on server
             	cAndSendError(socket,"\nError: File not found.", 1, pNumber);
             }
-             
+
             fileInfo = new byte[SIZEB];
             DatagramPacket ack = new DatagramPacket(fileInfo, fileInfo.length);
-            while (!clientRequest(socket, ack,"req")) {
-            	fileInfo = byteArrayCreater(dataBlockInfo, newB);
-	            fileInfo = byteArrayCreater(fileInfo, dataBInfo);
-	            sendBytes(socket, pNumber, fileInfo);
-        	}
+//            while (!clientRequest(socket, ack,"req")) {
+//            	fileInfo = byteArrayCreater(dataBlockInfo, newB);
+//	            fileInfo = byteArrayCreater(fileInfo, dataBInfo);
+//	            sendBytes(socket, pNumber, fileInfo);
+//        	}
+//
+//            while (checkAckType(ack.getData(), newB) == ReceivedType.DUPLICATE) {
+//                System.out.println("DUPLICATE");
+//            	while (!clientRequest(socket, ack,"req")) {
+//            	}
+//            }
 
-            while (checkAckType(ack.getData(), newB) == AckType.DUPLICATE) {
-                System.out.println("DUPLICATE");
-            	while (!clientRequest(socket, ack,"req")) {
-            	}
+            ReceivedType tempType = ReceivedType.DUPLICATE;
+            while (tempType == ReceivedType.DUPLICATE) {
+                while (!clientRequest(socket, ack,"req")) {
+                    fileInfo = byteArrayCreater(dataBlockInfo, newB);
+                    fileInfo = byteArrayCreater(fileInfo, dataBInfo);
+                    sendBytes(socket, pNumber, fileInfo);
+                }
+                tempType = checkAckType(ack.getData(), newB);
+                if (tempType == ReceivedType.DUPLICATE)
+                    System.out.println("DUPLICATE");
             }
-            
+
             pNumber = ack.getPort();
 
-            if (checkAckType(ack.getData(), newB) == AckType.FRESH) {
+            if (tempType == ReceivedType.FRESH) {
 
                 if (newB[1] < 255) newB[1]++;
                 else if (newB[1] == 255 && newB[0] < 255) {
@@ -218,7 +215,7 @@ public class TransferHub {
             }
         }
     }
-     
+
     //creates an byte array that will be sent over to the client
     public byte[] byteArrayCreater(byte[] source, byte[] goingB)
     {
@@ -229,9 +226,9 @@ public class TransferHub {
         //returns final byte array
         return finalBA;
     }
-     
+
     //checks to see if the data is ACK or ERROR. If the data is ack, is it duplicate or not
-    private AckType checkAckType(byte[] fileInfo, byte[] block) {
+    private ReceivedType checkAckType(byte[] fileInfo, byte[] block) {
         //checks to see if it is 0 4 0 1
 
         int expectedBlockNo = Utils.getBlockNo(block);
@@ -239,22 +236,21 @@ public class TransferHub {
 
         if (fileInfo[0] == 0 && fileInfo[1] == 4) { // data is ack
             if (receivedBlockNo < expectedBlockNo) {
-                return AckType.DUPLICATE;
+                return ReceivedType.DUPLICATE;
             } else {
-                return AckType.FRESH;
+                return ReceivedType.FRESH;
             }
         }
-         
-        return AckType.ERROR;
+
+        return ReceivedType.ERROR;
     }
-     
- 
+
+
     //checks to see if the content of the packet is DATA or ERROR
-    private AckType checkD(byte[] fileInfo, byte[] block) {
+    private ReceivedType checkPacketType(byte[] fileInfo, int expectedBlockNo) {
         //checks to see if it is 0 4 0 1
-    
-    	
-    	 int expectedBlockNo = Utils.getBlockNo(block);
+
+
          int receivedBlockNo = Utils.getBlockNo(fileInfo);
          //uncomment for testing
          //System.out.println(expectedBlockNo);
@@ -262,13 +258,13 @@ public class TransferHub {
 
          if (fileInfo[0] == 0 && fileInfo[1] == 3) { // data is data
              if (receivedBlockNo < expectedBlockNo) {
-                 return AckType.DUPLICATE;
+                 return ReceivedType.DUPLICATE;
              } else {
-                 return AckType.FRESH;
+                 return ReceivedType.FRESH;
              }
          }
-          
-         return AckType.ERROR;
+
+         return ReceivedType.ERROR;
     }
 
 
@@ -303,30 +299,30 @@ public class TransferHub {
         public byte[] read(int blocks) throws FileNotFoundException, IOException, SecurityException
         {
         	try {
-	            BufferedInputStream in = new BufferedInputStream(new FileInputStream(fileName));	
+	            BufferedInputStream in = new BufferedInputStream(new FileInputStream(fileName));
 	            byte[] dataRead = new byte[blocks];
-	
+
 	            in.skip((long) location);
-	            
+
 	            if ((bytesRead = in.read(dataRead)) != -1) {
 	                location += bytesRead;
 	            } else {
 	                location = 0;
 	                bytesRead = 0;
 	            }
-	
+
 	            in.close();
-	
+
 	            if(bytesRead < blocks) {
 	                System.out.println("Fixing array information... ");
 	                byte dataReadTrim[] = Arrays.copyOf(dataRead, bytesRead);
 	                return dataReadTrim;
 	            }
-	
+
 	            return dataRead;
         	}
         	finally {
-        		
+
         	}
         	//add send error packet
         }
@@ -347,10 +343,10 @@ public class TransferHub {
             } else {
                 try {
                     out = new FileOutputStream(fileName, true);
-                } catch (IOException e) {                	
+                } catch (IOException e) {
                     String commonErrorMssg = callerId == SERVER? "server for WRQ." : "client for RRQ.";
                     if (e.getMessage().contains("Permission denied")) {
-                        String errorMessage = String.format("Access Violation happened on the %s", commonErrorMssg);                        
+                        String errorMessage = String.format("Access Violation happened on the %s", commonErrorMssg);
                         System.out.println(errorMessage);
                         cAndSendError(sock, "Access violation.", 2, port);
                     } else if (e.getMessage().contains("Access is denied")) {

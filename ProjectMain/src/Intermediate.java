@@ -25,7 +25,7 @@ public class Intermediate implements Runnable {
         int packetNo = 0;
         int chosenPacket = 0;
 		int servLength = 0;
-        Boolean verbose = false;
+        boolean verbose = false;
 
         Scanner scan = new Scanner(System.in);
         
@@ -35,7 +35,7 @@ public class Intermediate implements Runnable {
         } else {
         	verbose = true;
         }        
-        
+
         while (choice < 1 || choice > 4) {
             System.out.print("Enter (1) for normal operation, enter (2) to lose a packet, enter (3) delay a packet, or enter (4) to duplicate a packet:");
             choice = scan.nextInt();
@@ -43,23 +43,23 @@ public class Intermediate implements Runnable {
 
         if (choice == 1) {
             //do nothing
-        } else if (choice == 2) {
+        } else if (choice == 2) { // loose packet
 	        System.out.print("Choose an integer number for which packet to lose:");
 	        chosenPacket = scan.nextInt();
 	        System.out.print("Choose type of packet to lose(request,ack, or data):");
 	        typeChosen = scan.next();
 	        System.out.print("Choose side to implement(client or server)");
 	        side = scan.next();
-        } else if (choice == 3) {
+        } else if (choice == 3) { // delay packet
             System.out.print("Choose an integer number for which packet to delay:");
             chosenPacket = scan.nextInt();
-            System.out.print("Choose an integer number for how many milliseconds to delay:");
+            System.out.print("Choose an integer number for how many milliseconds to delay (greater than 3000):");
             delay = scan.nextInt();
             System.out.print("Choose type of packet to delay(request,ack, or data):");
             typeChosen = scan.next();
 	        System.out.print("Choose side to implement(client or server)");
             side = scan.next();
-        } else { // if (choice == 4)
+        } else { // if (choice == 4) // duplicate packet
             System.out.print("Choose an integer number for which packet to duplicate:");
             chosenPacket = scan.nextInt();
             //System.out.print("Choose an integer number for how many milliseconds between duplicates:");
@@ -72,10 +72,7 @@ public class Intermediate implements Runnable {
         scan.close();
 
         while (true) {
-        	
             try {
-            	
-            	
                 addThread();
                 //create packet for recieving
                 byte data[] = new byte[516];
@@ -88,10 +85,10 @@ public class Intermediate implements Runnable {
 
                 //Process the received datagram.
                 if (verbose) {
-                	Utils.printInfo(forwardingPacket);
+                	Utils.printInfo(forwardingPacket, Utils.RECEIVE);
                 }
-                
-            	packetNo = Utils.getBlockNo(forwardingPacket);
+
+                packetNo = Utils.getBlockNo(forwardingPacket);
 
                 if (forwardingPacket.getData()[1] == 1 || forwardingPacket.getData()[1] == 2) {
                     type = "request";
@@ -107,6 +104,7 @@ public class Intermediate implements Runnable {
                 if (!(choice == 2 && type.equals(typeChosen)  && packetNo == chosenPacket && side.equals("client"))) {
                 	
                     if (choice == 3 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("client")) {
+
                         Thread.sleep(delay);
                     }					
                     
@@ -115,7 +113,7 @@ public class Intermediate implements Runnable {
 	
 					//print out packet sent
 					if (verbose) {
-						Utils.printInfo(forwardingPacket);
+						Utils.printInfo(forwardingPacket, Utils.SEND);
 					}
 					
 					//create sending socket and send packet
@@ -127,8 +125,6 @@ public class Intermediate implements Runnable {
 						System.out.println("\nSending out duplicate packet\n");
 						sendReceiveSocket.send(forwardingPacket);
 				    }
-					
-					
 					while (true) {
 						// Receive response from server
 						data = new byte[516];
@@ -138,12 +134,12 @@ public class Intermediate implements Runnable {
 		
 						//print information
 						if (verbose) {
-							Utils.printInfo(forwardingPacket);
+							Utils.printInfo(forwardingPacket, Utils.RECEIVE);
 						}
 	
 	                    packetNo = Utils.getBlockNo(forwardingPacket);
 	                    servLength = forwardingPacket.getLength();
-	
+
 						//check for type again
 						if (forwardingPacket.getData()[1] == 1 || forwardingPacket.getData()[1] == 2) {
 		                    type = "request";
@@ -180,10 +176,9 @@ public class Intermediate implements Runnable {
 						    	sendReceiveSocket.send(forwarding2Packet);
 						    }
 						    
-						    
 						    //print out sent datagram
 						    if (verbose) {
-								Utils.printInfo(forwarding2Packet);
+								Utils.printInfo(forwarding2Packet, Utils.SEND);
 						    }
 						    break;
 						} else {

@@ -2,6 +2,10 @@ import java.net.DatagramPacket;
 import java.util.Arrays;
 
 public class Utils {
+
+    public static final boolean SEND = true;
+    public static final boolean RECEIVE = false;
+
     public static int getBlockNo(DatagramPacket packet) {
         return ((packet.getData()[2] & 0xFF) * 256) + (packet.getData()[3] & 0xFF);
     }
@@ -20,12 +24,16 @@ public class Utils {
         return ((packet[MSB] & 0xFF) * 256) + (packet[LSB] & 0xFF);
     }
 
-    public static void printInfo(DatagramPacket packet) {
+    public static void printInfo(DatagramPacket packet, boolean sendReceive) {
         int packetLength = packet.getLength();
 
         // Process the received datagram.
         System.out.println("\nHost ID: " + packet.getAddress());
-        System.out.println("Recieved on port number: " + packet.getPort());
+        if(sendReceive == SEND) {
+            System.out.println("Sent on port number: " + packet.getPort());
+        } else {
+            System.out.println("Received on port number: " + packet.getPort());
+        }
         System.out.println("Length of the packet: " + packetLength);
         // Form a String from the byte array.
         int block = getBlockNo(packet);
