@@ -104,7 +104,7 @@ public class Intermediate implements Runnable {
                 if (!(choice == 2 && type.equals(typeChosen)  && packetNo == chosenPacket && side.equals("client"))) {
                 	
                     if (choice == 3 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("client")) {
-
+                    	choice = 1;
                         Thread.sleep(delay);
                     }					
                     
@@ -124,6 +124,7 @@ public class Intermediate implements Runnable {
 					if (choice == 4 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("client")) {
 						System.out.println("\nSending out duplicate packet\n");
 						sendReceiveSocket.send(forwardingPacket);
+						choice = 1;
 				    }
 					while (true) {
 						// Receive response from server
@@ -174,6 +175,7 @@ public class Intermediate implements Runnable {
 						    if (choice == 4 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("server")) {
 								System.out.println("\nSending out duplicate packet\n");
 						    	sendReceiveSocket.send(forwarding2Packet);
+						    	choice = 1;
 						    }
 						    
 						    //print out sent datagram
