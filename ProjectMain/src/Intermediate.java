@@ -265,5 +265,80 @@ public class Intermediate implements Runnable {
     public static void main(String[] args) {
         (new Thread(new Intermediate())).start();
     }
+    
+    public DatagramPacket opCodeError(DatagramPacket packet) {    	
+    	byte[] newData = packet.getData();
+    	newData[0] = 9;
+    	newData[1] = 9;
+		return new DatagramPacket(newData, newData.length, packet.getAddress(), packet.getPort());    	
+    }
+    
+    public DatagramPacket blockNumberError(DatagramPacket packet, int blockNum) {
+		packet.getData()[2] = (byte) ((blockNum >> 8) & 0xFF);
+		packet.getData()[3] = (byte) (blockNum & 0xFF);
+		return new DatagramPacket(packet.getData(), packet.getLength(),	packet.getAddress(), packet.getPort());
+	}
+    
+    public DatagramPacket noEndZeroError(DatagramPacket packet) {    	
+    	return new DatagramPacket(packet.getData(), packet.getLength()-1, packet.getAddress(), packet.getPort());   	
+    }
+    
+    public DatagramPacket badEndZeroError(DatagramPacket packet) {    	
+    	byte[] newData = packet.getData();
+    	newData[newData.length-1] = 9;
+		return new DatagramPacket(newData, newData.length, packet.getAddress(), packet.getPort());    	
+    }
+    
+    public DatagramPacket modeError(DatagramPacket packet) {    	
+    	byte[] newData = packet.getData();
+		int i = 1;
+		i = getZero(newData,1);
+		byte[] newMode = ("xxx").getBytes();
+		for (int j = 0; j < newMode.length; j++) {
+			newData[i + j + 1] = newMode[j];
+		}
+		return new DatagramPacket(newData, newData.length, packet.getAddress(),	packet.getPort());	
+    }
+    
+ 	public DatagramPacket fileNameError(DatagramPacket packet) {
+ 		byte[] oldData = packet.getData();
+ 		byte[] newData = new byte[oldData.length];
+ 		int i = 1;
+		i = getZero(oldData,1);
+ 		
+ 		newData[0] = oldData[0];
+ 		newData[1] = oldData[1];
+ 		
+ 		for (int k=0 ; k < i-2 ; k++) {
+ 			newData[k+2] = 0;
+ 		}
+ 		return new DatagramPacket(newData, newData.length, packet.getAddress(),	packet.getPort());
+ 	}
+ 	
+ 	public DatagramPacket sizeBiggerDataError(DatagramPacket packet) {
+ 		byte[] newData = packet.getData();
+ 		newData[518] = 9;
+ 		return new DatagramPacket(newData, newData.length, packet.getAddress(),	packet.getPort());
+ 	}
+ 	
+ 	public DatagramPacket sizeBiggerAckError(DatagramPacket packet) {
+ 		byte[] newData = new byte[] {packet.getData()[0], packet.getData()[1], packet.getData()[2], packet.getData()[3], packet.getData()[0], packet.getData()[1]};
+ 		return new DatagramPacket(newData, newData.length, packet.getAddress(),packet.getPort());
+ 	}
+ 	
+ 	public DatagramPacket sizeSmallerAckError(DatagramPacket packet) {
+ 		byte[] newData = new byte[] { packet.getData()[0], packet.getData()[1], (byte)0x00 };
+ 		return new DatagramPacket(newData, newData.length, packet.getAddress(),packet.getPort());
+ 	}   
+    
+    private int getZero(byte[] msg, int currPos)
+    {
+        for (int i = currPos; i < msg.length; i++){
+            if (msg[i] == 0){
+                return i;
+            }
+        }
+        return 0;
+    }    
 
 }
