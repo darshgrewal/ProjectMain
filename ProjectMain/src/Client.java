@@ -96,12 +96,16 @@ public class Client extends TransferHub
 	        	}
 				//clientRequest(socketSR, receivePacket);
 				//cAndSendError(socket, "Timeout Occured.", 0, callerId);
-				
-				if (receivePacket.getData()[0] == 0 &&
-						receivePacket.getData()[1] == 4 &&
-						receivePacket.getData()[2] == 0 &&
+				try {
+					Utils.checkPacketStructure(receivePacket, Utils.ACK);
+					if (receivePacket.getData()[2] == 0 &&
 						receivePacket.getData()[3] == 0)
-				sendFile(socketSR, receivePacket.getPort(), "client/" + fName, CLIENT);
+							sendFile(socketSR, receivePacket.getPort(), "client/" + fName, CLIENT);
+					else
+						cAndSendError(socketSR, "Illegal TFTP operation.", 4, socket);
+				} catch (Utils.InvalidPacketException e) {
+					cAndSendError(socketSR, "Illegal TFTP operation.", 4, socket);
+				}
 			}
 		}
 		

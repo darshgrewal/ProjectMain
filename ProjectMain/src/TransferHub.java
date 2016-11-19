@@ -63,6 +63,13 @@ public class TransferHub {
     		while (!clientRequest(socket, dataPacket, "req")) {
         	}
 
+            try {
+                Utils.checkPacketStructure(dataPacket, Utils.DATA);
+            } catch (Utils.InvalidPacketException e) {
+                cAndSendError(socket, "Illegal TFTP operation.", 4, dataPacket.getPort());
+                break;
+            }
+
             ReceivedType receivedPacketType = checkPacketType(dataPacket.getData(),expectedPacketNo);
             // if received packet is an error no need to continue
             byte blockbyte[] = Arrays.copyOfRange(dataPacket.getData(), 2, 4);
@@ -169,18 +176,12 @@ public class TransferHub {
 
             fileInfo = new byte[SIZEB];
             DatagramPacket ack = new DatagramPacket(fileInfo, fileInfo.length);
-//            while (!clientRequest(socket, ack,"req")) {
-//            	fileInfo = byteArrayCreater(dataBlockInfo, newB);
-//	            fileInfo = byteArrayCreater(fileInfo, dataBInfo);
-//	            sendBytes(socket, pNumber, fileInfo);
-//        	}
-//
-//            while (checkAckType(ack.getData(), newB) == ReceivedType.DUPLICATE) {
-//                System.out.println("DUPLICATE");
-//            	while (!clientRequest(socket, ack,"req")) {
-//            	}
-//            }
 
+             // - wait to receive an ack. If timeout happens, retransmit the previous packet
+             // - when an ack is received check to make sure it is not duplicate
+             // - if duplicate ack received, throw that away and wait for another ack. start timeout timer.
+             // - if a fresh ack is received proceed as normal
+            boolean errorHappened = false;
             ReceivedType tempType = ReceivedType.DUPLICATE;
             while (tempType == ReceivedType.DUPLICATE) {
                 while (!clientRequest(socket, ack,"req")) {
@@ -188,12 +189,24 @@ public class TransferHub {
                     fileInfo = byteArrayCreater(fileInfo, dataBInfo);
                     sendBytes(socket, pNumber, fileInfo);
                 }
+
+                // check that the received packet is an ack and it is formed  correctly
+                pNumber = ack.getPort();
+                try {
+                    Utils.checkPacketStructure(ack, Utils.ACK);
+                } catch (Utils.InvalidPacketException e) {
+                    cAndSendError(socket, "Illegal TFTP operation.", 4, pNumber);
+                    errorHappened = true;
+                    break;
+                }
+
                 tempType = checkAckType(ack.getData(), newB);
                 if (tempType == ReceivedType.DUPLICATE)
                     System.out.println("DUPLICATE");
             }
 
-            pNumber = ack.getPort();
+            if (errorHappened)
+                break;
 
             if (tempType == ReceivedType.FRESH) {
 
