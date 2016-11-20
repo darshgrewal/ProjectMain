@@ -3,12 +3,15 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.net.DatagramPacket;
 import java.util.Scanner;
+import java.net.InetAddress;
 
 public class Client extends TransferHub
 {
 	private DatagramSocket socketSR;
+	
 	
 	public Client()
 	{
@@ -36,6 +39,17 @@ public class Client extends TransferHub
 			} else if ( mode == 2 ) {
 				socket = 2268;
 				break;
+			}
+		}
+		while (true){
+			try
+			{
+				IPAddress = InetAddress.getLocalHost();
+				break;
+			}
+			catch(UnknownHostException uhe)
+			{
+				System.out.println("Unknown host...");
 			}
 		}
 		

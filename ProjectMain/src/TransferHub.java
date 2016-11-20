@@ -1,6 +1,6 @@
 import java.net.*;
-import java.net.SocketTimeoutException;
 import java.util.*;
+import java.net.InetAddress;
 import java.io.*;
 
 public class TransferHub {
@@ -11,6 +11,9 @@ public class TransferHub {
 
     public final int SERVER = 0;
     public final int CLIENT = 1;
+    
+    protected InetAddress IPAddress;
+    protected InetAddress serverIPAddress;
 
     private enum ReceivedType {ERROR, FRESH, DUPLICATE }
 
@@ -111,7 +114,7 @@ public class TransferHub {
         DatagramPacket sendDataP;
         // send data
         try {
-            sendDataP = new DatagramPacket(msg, msg.length, InetAddress.getLocalHost(), pNumber);
+            sendDataP = new DatagramPacket(msg, msg.length, IPAddress, pNumber);
 
             System.out.println("Client: Packet is being sent");
 
@@ -125,7 +128,7 @@ public class TransferHub {
                 System.exit(1);
             }
             //throws an exception if it can't be sent to the client
-        } catch(UnknownHostException e) {
+        } catch(IllegalArgumentException e) {
             e.printStackTrace();
             System.exit(1);
         }
