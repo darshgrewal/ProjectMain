@@ -119,7 +119,7 @@ public class Client extends TransferHub
 						cAndSendError(socketSR, "Illegal TFTP operation.", 4, socket);
 				} catch (Utils.InvalidPacketException e) {
 	            	System.out.println(e.getMessage());
-					cAndSendError(socketSR, "Illegal TFTP operation.", 4, socket);
+					cAndSendError(socketSR, "Illegal TFTP operation. " + e.getMessage(), 4, socket);
 				}
 			}
 		}
