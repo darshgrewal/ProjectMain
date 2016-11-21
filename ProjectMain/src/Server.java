@@ -75,7 +75,7 @@ public class Server extends TransferHub implements Runnable{
 			this.clientRequest(this.rSocket, this.rPacket, "server");
 			this.addThread();
 			
-			Thread serverX = new Thread (new AssistantC(this.rPacket.getPort(), this.rPacket.getData(),this));			
+			Thread serverX = new Thread (new AssistantC(this.rPacket.getPort(), this.rPacket,this));			
 			serverX.start();
 		}
 	}

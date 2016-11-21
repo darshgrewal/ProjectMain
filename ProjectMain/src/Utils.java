@@ -66,9 +66,9 @@ public class Utils {
     }
 
     //returns the position as integer next to the 0
-    public static int getZero(byte[] data, int startPos)
+    public static int getZero(byte[] data, int length, int startPos)
     {
-        for (int i = startPos; i < data.length; i++){
+        for (int i = startPos; i < length; i++){
             if (data[i] == 0){
                 return i;
             }
@@ -98,13 +98,13 @@ public class Utils {
 	            case RRQ:
 	            case WRQ:
 	                int currentIndex = 2;
-	                int index = getZero(data, currentIndex);
+	                int index = getZero(data, length, currentIndex);
 	                if (index == -1)
 	                    throw new InvalidPacketException("Request packet is missing the intermediate and end 0 bytes.");
 	                if (index == currentIndex)
 	                    throw new InvalidPacketException("File Name is missing from the request packet");
 	                currentIndex = index + 1;
-	                index = getZero(data, currentIndex);
+	                index = getZero(data, length, currentIndex);
 	                if (index == -1)
 	                    throw new InvalidPacketException("Request packet does not end in a 0");
 	                if (index == currentIndex)

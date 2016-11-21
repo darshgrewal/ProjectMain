@@ -1,20 +1,24 @@
 import java.util.Arrays;
+import java.net.DatagramPacket;
 import java.net.SocketException;
 import java.net.DatagramSocket;
 
 public class AssistantC extends TransferHub implements Runnable{
     
     DatagramSocket SendSocket;
-    byte [] fileinfo = new byte [512];
+//    byte [] fileinfo = new byte [512];
     int pnum;
     Server listener;
+    
+    private DatagramPacket reqPacket;
   
      
-    public AssistantC(int Port, byte [] Data, Server x){
+    public AssistantC(int Port, DatagramPacket packet, Server x){
         try {
+        	reqPacket = packet;
         	listener = x;
             SendSocket = new DatagramSocket();
-            fileinfo = Data;
+//            fileinfo = packet.getData();
             pnum = Port;
             IPAddress = x.IPAddress;
         }catch(SocketException se){
@@ -50,10 +54,11 @@ public class AssistantC extends TransferHub implements Runnable{
 //    }
 
   //passes a string array that contains the request made by the client 
-    private String[] createArray(byte[] message) throws InvalidRequestException
+    private String[] createArray(DatagramPacket packet) throws InvalidRequestException
     {
+    	byte[] message = packet.getData();
         try {
-            Utils.checkPacketStructure(message, message.length, Utils.REQ);
+            Utils.checkPacketStructure(packet, Utils.REQ);
         }
         catch (Utils.InvalidPacketException e){
             System.out.println("Invalid packet structure was found:" + e.getMessage());
@@ -69,12 +74,12 @@ public class AssistantC extends TransferHub implements Runnable{
             req[0] = "Write";
         } 
         Integer prev = 1;
-        Integer next =  Utils.getZero(message, prev);
+        Integer next =  Utils.getZero(packet.getData(), packet.getLength(), prev);
           
         req[1] = new String(Arrays.copyOfRange(message, prev + 1, next));
           
         prev = new Integer(next);
-        next =  Utils.getZero(message, prev+1);
+        next =  Utils.getZero(packet.getData(), packet.getLength(), prev+1);
           
         req[2] = new String(Arrays.copyOfRange(message, prev + 1, next));
           
@@ -97,14 +102,14 @@ public class AssistantC extends TransferHub implements Runnable{
 //    }
       
     //lets the client know the response depending on which type of request is being received
-    private void reqHandle(byte[] reqBytes, int port){
-        byte[] message;
+    private void reqHandle(DatagramPacket packet, int port){
+    	byte[] message;
         String[] req = {};
           
         try {
             DatagramSocket requestSocket = new DatagramSocket();
             try {
-                req = this.createArray(reqBytes);
+                req = this.createArray(packet);
             } catch (InvalidRequestException e1) {
                 cAndSendError(requestSocket, e1.getMessage(), 4, port);
                 return;
@@ -126,7 +131,7 @@ public class AssistantC extends TransferHub implements Runnable{
     }
       
     public void run() {
-        reqHandle(this.fileinfo, this.pnum);
+        reqHandle(reqPacket, this.pnum);
         SendSocket.close();
     }
     
