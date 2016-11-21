@@ -14,7 +14,7 @@ public class TransferHub {
     protected InetAddress IPAddress;
     protected InetAddress serverIPAddress;
 
-    private enum ReceivedType {ERROR, FRESH, DUPLICATE }
+    private enum ReceivedType {ERROR, FRESH, DUPLICATE, OUTOFSYNC }
 
     //creates a receive request to send to the main server class, creating the socket and packet to hold the info
     public boolean clientRequest(DatagramSocket rSocket, DatagramPacket rPacket, String type)
@@ -25,7 +25,7 @@ public class TransferHub {
 	        	rSocket.setSoTimeout(3000);
 	            rSocket.receive(rPacket);
 	            //rPacket.setData(Arrays.copyOfRange(rPacket.getData(), 0, rPacket.getLength()));
-	            //client recieves the notification that packet has reached it from the server
+	            //client receives the notification that packet has reached it from the server
 	            System.out.println("Host: The packet has been received.");
 	            Utils.printInfo(rPacket, Utils.RECEIVE);
 	            normal = true;
@@ -89,6 +89,10 @@ public class TransferHub {
             } else if (receivedPacketType == ReceivedType.DUPLICATE) {
                 System.out.println("Received a duplicated packet, hence not writing to the file.");
             } else if (receivedPacketType == ReceivedType.ERROR){ // received error packet instead of ack
+                break;
+            } else if (receivedPacketType == ReceivedType.OUTOFSYNC) {		
+            	System.out.println("Received a packet with unexpected block number.");		
+                cAndSendError(socket, "Illegal TFTP operation.", 4, dataPacket.getPort());		
                 break;
             }
 
@@ -212,7 +216,13 @@ public class TransferHub {
 
                 tempType = checkAckType(ack.getData(), newB);
                 if (tempType == ReceivedType.DUPLICATE)
-                    System.out.println("DUPLICATE");
+                	System.out.println("Ack is Duplicate.");
+                if (tempType == ReceivedType.OUTOFSYNC) {		
+                    System.out.println("Block numaber in ack was unexpected.");		
+	                cAndSendError(socket, "Illegal TFTP operation.", 4, pNumber);		
+	                errorHappened = true;		
+	                break;		
+                }
             }
 
             if (errorHappened)
@@ -250,7 +260,7 @@ public class TransferHub {
         return finalBA;
     }
 
-    //checks to see if the data is ACK or ERROR. If the data is ack, is it duplicate or not
+    //checks to see if the data is ACK or ERROR. If the packet is ack, is it duplicate, fresh or outofsync
     private ReceivedType checkAckType(byte[] fileInfo, byte[] block) {
         //checks to see if it is 0 4 0 1
 
@@ -260,8 +270,10 @@ public class TransferHub {
         if (fileInfo[0] == 0 && fileInfo[1] == 4) { // data is ack
             if (receivedBlockNo < expectedBlockNo) {
                 return ReceivedType.DUPLICATE;
-            } else {
+            } else if (receivedBlockNo == expectedBlockNo) {		
                 return ReceivedType.FRESH;
+            } else {
+                return ReceivedType.OUTOFSYNC;
             }
         }
 
@@ -269,7 +281,7 @@ public class TransferHub {
     }
 
 
-    //checks to see if the content of the packet is DATA or ERROR
+    //checks to see if the content of the packet is DATA or ERROR. If the packet is data, is it duplicate, fresh or outofsync
     private ReceivedType checkPacketType(byte[] fileInfo, int expectedBlockNo) {
         //checks to see if it is 0 4 0 1
 
@@ -282,8 +294,10 @@ public class TransferHub {
          if (fileInfo[0] == 0 && fileInfo[1] == 3) { // data is data
              if (receivedBlockNo < expectedBlockNo) {
                  return ReceivedType.DUPLICATE;
-             } else {
+             } else if (receivedBlockNo == expectedBlockNo) {		
                  return ReceivedType.FRESH;
+             } else {
+                 return ReceivedType.OUTOFSYNC;
              }
          }
 
