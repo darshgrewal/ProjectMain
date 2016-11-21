@@ -26,6 +26,8 @@ public class Utils {
     }
 
     public static int getBlockNo(DatagramPacket packet) {
+    	if (packet.getLength() < 4)
+    		return 0;
         return ((packet.getData()[2] & 0xFF) * 256) + (packet.getData()[3] & 0xFF);
     }
 
@@ -82,6 +84,11 @@ public class Utils {
     }
 
     public static void checkPacketStructure(byte[] data, int length, byte expectedType) throws InvalidPacketException{
+    	
+    	int currentIndex;
+    	int index;
+    	String mode;
+    	
         if (data[0] != 0) throw new InvalidPacketException("First byte should be zero.");
 
         String errorMessage = String.format("Was expecting %s but received %s",
@@ -96,9 +103,8 @@ public class Utils {
 	        else if (data[1] != expectedType) throw new InvalidPacketException(errorMessage);
 	        switch (data[1]) {
 	            case RRQ:
-	            case WRQ:
-	                int currentIndex = 2;
-	                int index = getZero(data, length, currentIndex);
+	            	currentIndex = 2;
+	                index = getZero(data, length, currentIndex);
 	                if (index == -1)
 	                    throw new InvalidPacketException("Request packet is missing the intermediate and end 0 bytes.");
 	                if (index == currentIndex)
@@ -109,7 +115,24 @@ public class Utils {
 	                    throw new InvalidPacketException("Request packet does not end in a 0");
 	                if (index == currentIndex)
 	                    throw new InvalidPacketException("Mode is missing from the request packet");
-	                String mode = new String(Arrays.copyOfRange(data,currentIndex,index)).toLowerCase();
+	                mode = new String(Arrays.copyOfRange(data,currentIndex,index)).toLowerCase();
+	                if(!mode.equals("mail") && !mode.equals("netascii") && !mode.equals("octet"))
+	                    throw new InvalidPacketException("Mode is neither mail, netascii nor octet.");
+	                break;
+	            case WRQ:
+	                currentIndex = 2;
+	                index = getZero(data, length, currentIndex);
+	                if (index == -1)
+	                    throw new InvalidPacketException("Request packet is missing the intermediate and end 0 bytes.");
+	                if (index == currentIndex)
+	                    throw new InvalidPacketException("File Name is missing from the request packet");
+	                currentIndex = index + 1;
+	                index = getZero(data, length, currentIndex);
+	                if (index == -1)
+	                    throw new InvalidPacketException("Request packet does not end in a 0");
+	                if (index == currentIndex)
+	                    throw new InvalidPacketException("Mode is missing from the request packet");
+	                mode = new String(Arrays.copyOfRange(data,currentIndex,index)).toLowerCase();
 	                if(!mode.equals("mail") && !mode.equals("netascii") && !mode.equals("octet"))
 	                    throw new InvalidPacketException("Mode is neither mail, netascii nor octet.");
 	                break;
