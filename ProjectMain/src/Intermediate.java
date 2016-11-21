@@ -70,7 +70,7 @@ public class Intermediate implements Runnable {
             	side = scan.next();
         } else if (choice == 5) {
         	choice = 1;
-        	System.out.print("Choose error: (1) opcode, (2) block#, (3) filename, (4) mode, (5) size, (6) end/mid zero: ");
+        	System.out.print("Choose error: (1) opcode, (2) block#, (3) filename, (4) mode, (5) size, (6) end zero: ");
             choice2 = scan.nextInt();
             if (choice2 == 1) {
             	System.out.print("Choose an integer number for which packet to change: ");
@@ -97,9 +97,6 @@ public class Intermediate implements Runnable {
     	        }
     	        System.out.print("Choose side to implement(client or server): ");
     	        side = scan.next();
-            } else if (choice2 == 6) {
-    	        System.out.print("(1) Non-zero end, or (2) No zero end: ");
-    	        typeChosen = scan.next();            	
             }
         }
         scan.close();
@@ -153,11 +150,7 @@ public class Intermediate implements Runnable {
                 		}
                 	}
                 } else if (choice2 == 6 && type.equals("request")) {
-                	if (typeChosen.equals("1")) {
                 		forwardingPacket = noEndZeroError(forwardingPacket);
-                	} else {
-                		forwardingPacket = badEndZeroError(forwardingPacket);
-                	}
                 } 
                 
                 /* insert statement to check for client sent ack or client sent data or request and chosen packet*/
@@ -166,12 +159,12 @@ public class Intermediate implements Runnable {
 		                    		choice = 1;
 		                        	Thread.sleep(delay);
 		                    	}					
-		                    
+		            
 					// Forward packet to server
 					forwardingPacket = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), InetAddress.getLocalHost(), serverPort);
 		
 					//print out packet sent
-					if (verbose) {
+					if (verbose ) {
 						Utils.printInfo(forwardingPacket, Utils.SEND);
 					}
 		
@@ -188,7 +181,11 @@ public class Intermediate implements Runnable {
 					
 					while (true) {
 						// Receive response from server
-						data = new byte[516];
+						if (!(choice2 == 5 && type.equals(typeChosen) && side.equals("server") && chosenPacket == packetNo)) {
+							data = new byte[516];
+						} else {
+							data = new byte[519];
+						}
 						forwardingPacket = new DatagramPacket(data, data.length);	
 						sendReceiveSocket.receive(forwardingPacket);
 						serverPort = forwardingPacket.getPort();
@@ -236,7 +233,6 @@ public class Intermediate implements Runnable {
 			                	System.out.println(chosenPacket);
 			                	System.out.println(packetNo);
 			                	if (type.equals("data")) {
-			                		System.out.println("fgfdgdfgdf");
 			                		forwardingPacket = sizeBiggerDataError(forwardingPacket);
 			                	} else if (type.equals("ack")) {
 			                		if (sizeChange.equals("bigger")) {
@@ -248,7 +244,10 @@ public class Intermediate implements Runnable {
 			                } 
 		
 						    // Forward response to client
-						    forwarding2Packet = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getData().length, clientAddress, clientPort);
+						    if (choice2 == 5 && type.equals(typeChosen) && side.equals("server") && chosenPacket == packetNo) {
+						    	servLength = 519;
+						    }
+						    forwarding2Packet = new DatagramPacket(forwardingPacket.getData(), servLength, clientAddress, clientPort);
 						    receiveSocket.send(forwarding2Packet);
 		
 						    //if choice is to duplicate this particular packet, send again
@@ -312,7 +311,7 @@ public class Intermediate implements Runnable {
     		
     		
     						    // Forward response to client
-    						    forwarding2Packet = new DatagramPacket(forwardingPacket.getData(), servLength, clientAddress, clientPort);
+    						    forwarding2Packet = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), clientAddress, clientPort);
     						    receiveSocket.send(forwarding2Packet);
     		
     						    //if choice is to duplicate this particular packet, send again
@@ -366,13 +365,6 @@ public class Intermediate implements Runnable {
     	return new DatagramPacket(packet.getData(), packet.getLength()-1, packet.getAddress(), packet.getPort());   	
     }
     
-    //implemented
-    public DatagramPacket badEndZeroError(DatagramPacket packet) {    	
-    	byte[] newData = packet.getData();
-    	newData[newData.length-1] = 9;
-		return new DatagramPacket(newData, newData.length, packet.getAddress(), packet.getPort());    	
-    }
-    
     public DatagramPacket modeError(DatagramPacket packet) {    	
     	byte[] newData = packet.getData();
 		int i = 1;
@@ -390,7 +382,6 @@ public class Intermediate implements Runnable {
  		byte[] newData = new byte[oldData.length];
  		int i = 1;
 		i = getZero(oldData,3)-2;
- 		System.out.print(i);
  		newData[0] = oldData[0];
  		newData[1] = oldData[1];
  		
