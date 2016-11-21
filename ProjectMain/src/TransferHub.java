@@ -5,7 +5,7 @@ import java.io.*;
 public class TransferHub {
 
     //the size values shouldn't change so they were made final variables
-    public final int SIZEB = 516;
+    public final int SIZEB = 519;
     public final int SIZEDB = 512;
 
     public final int SERVER = 0;
@@ -69,7 +69,7 @@ public class TransferHub {
                 Utils.checkPacketStructure(dataPacket, Utils.DATA);
             } catch (Utils.InvalidPacketException e) {
             	System.out.println(e.getMessage());
-                cAndSendError(socket, "Illegal TFTP operation.", 4, dataPacket.getPort());
+                cAndSendError(socket, "Illegal TFTP operation. " + e.getMessage(), 4, dataPacket.getPort());
                 break;
             }
 
@@ -209,7 +209,7 @@ public class TransferHub {
                     Utils.checkPacketStructure(ack, Utils.ACK);
                 } catch (Utils.InvalidPacketException e) {
                 	System.out.println(e.getMessage());
-                    cAndSendError(socket, "Illegal TFTP operation.", 4, pNumber);
+                    cAndSendError(socket, "Illegal TFTP operation." + e.getMessage(), 4, pNumber);
                     errorHappened = true;
                     break;
                 }
@@ -429,4 +429,3 @@ public class TransferHub {
 
     }
 }
-
