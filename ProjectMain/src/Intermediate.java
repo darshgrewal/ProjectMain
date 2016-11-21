@@ -134,9 +134,9 @@ public class Intermediate implements Runnable {
                 }
                 
                 if(choice2 == 1 && chosenPacket == packetNo && side.equals("client")) {
-                	opCodeError(forwardingPacket);
+                	forwardingPacket = opCodeError(forwardingPacket);
                 } else if (choice2 == 2 && chosenPacket == packetNo && side.equals("client")) {
-                	blockNumberError(forwardingPacket);
+                	forwardingPacket = blockNumberError(forwardingPacket);
                 } else if (choice2 == 3 && type.equals("request")) {
                 	System.out.println("didit");
                 	forwardingPacket = fileNameError(forwardingPacket);
@@ -229,9 +229,9 @@ public class Intermediate implements Runnable {
 						    }
 						    
 						    if(choice2 == 1 && chosenPacket == packetNo && side.equals("server")) {
-			                	opCodeError(forwardingPacket);
+						    	forwardingPacket = opCodeError(forwardingPacket);
 			                } else if (choice2 == 2 && chosenPacket == packetNo && side.equals("server")) {
-			                	blockNumberError(forwardingPacket);
+			                	forwardingPacket = blockNumberError(forwardingPacket);
 			                } else if (choice2 == 5 && type.equals(typeChosen) && side.equals("server") && chosenPacket == packetNo) {
 			                	System.out.println(chosenPacket);
 			                	System.out.println(packetNo);

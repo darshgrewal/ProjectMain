@@ -68,6 +68,7 @@ public class TransferHub {
             try {
                 Utils.checkPacketStructure(dataPacket, Utils.DATA);
             } catch (Utils.InvalidPacketException e) {
+            	System.out.println(e.getMessage());
                 cAndSendError(socket, "Illegal TFTP operation.", 4, dataPacket.getPort());
                 break;
             }
@@ -203,6 +204,7 @@ public class TransferHub {
                 try {
                     Utils.checkPacketStructure(ack, Utils.ACK);
                 } catch (Utils.InvalidPacketException e) {
+                	System.out.println(e.getMessage());
                     cAndSendError(socket, "Illegal TFTP operation.", 4, pNumber);
                     errorHappened = true;
                     break;

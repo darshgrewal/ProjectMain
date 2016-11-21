@@ -53,7 +53,7 @@ public class AssistantC extends TransferHub implements Runnable{
     private String[] createArray(byte[] message) throws InvalidRequestException
     {
         try {
-            Utils.checkPacketStructure(message, Utils.REQ);
+            Utils.checkPacketStructure(message, message.length, Utils.REQ);
         }
         catch (Utils.InvalidPacketException e){
             System.out.println("Invalid packet structure was found:" + e.getMessage());
