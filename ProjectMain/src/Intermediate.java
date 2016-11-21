@@ -14,11 +14,14 @@ public class Intermediate implements Runnable {
     }
 
     public void run() {
+    	DatagramPacket forwarding2Packet;
         String typeChosen = null;
         String side = null;
         String type = null;
+        String sizeChange = null;
         int delay = 0;
         int choice = 0;
+        int choice2 = 0;
         int clientPort;
         int serverPort = 2269;
         int packetNo = 0;
@@ -33,10 +36,10 @@ public class Intermediate implements Runnable {
         	verbose = false;
         } else {
         	verbose = true;
-        }        
+        }   
 
-        while (choice < 1 || choice > 4) {
-            System.out.print("Enter (1) for normal operation, enter (2) to lose a packet, enter (3) delay a packet, or enter (4) to duplicate a packet:");
+        while (choice < 1 || choice > 5) {
+            System.out.print("Enter (1) for normal operation, (2) to lose a packet, (3) delay a packet, (4) to duplicate a packet, or (5) for packet format errors: ");
             choice = scan.nextInt();
         }
 
@@ -58,13 +61,46 @@ public class Intermediate implements Runnable {
             	typeChosen = scan.next();
 	        System.out.print("Choose side to implement(client or server)");
             	side = scan.next();
-        } else { // if (choice == 4) // duplicate packet
+        } else if (choice == 4) { // if (choice == 4) // duplicate packet
             	System.out.print("Choose an integer number for which packet to duplicate:");
             	chosenPacket = scan.nextInt();
             	System.out.print("Choose type of packet to duplicate(request,ack, or data):");
             	typeChosen = scan.next();
 	        System.out.print("Choose side to implement(client or server)");
             	side = scan.next();
+        } else if (choice == 5) {
+        	choice = 1;
+        	System.out.print("Choose error: (1) opcode, (2) block#, (3) filename, (4) mode, (5) size, (6) end/mid zero: ");
+            choice2 = scan.nextInt();
+            if (choice2 == 1) {
+            	System.out.print("Choose an integer number for which packet to change: ");
+    	        chosenPacket = scan.nextInt();
+    	        System.out.print("Choose side to implement(client or server)");
+    	        side = scan.next();
+            } else if (choice2 == 2) {
+            	System.out.print("Choose an integer number for which packet to change: ");
+    	        chosenPacket = scan.nextInt();
+    	        System.out.print("Choose side to implement(client or server)");
+    	        side = scan.next();
+            } else if (choice2 == 3) {
+
+            } else if (choice2 == 4) {
+            	
+            } else if (choice2 == 5) {
+            	System.out.print("Choose an integer number for which packet to change: ");
+    	        chosenPacket = scan.nextInt();
+            	System.out.print("Choose type of packet to duplicate(ack or data): ");
+    	        typeChosen = scan.next();
+    	        if (typeChosen.equals("ack")) {
+    	        	System.out.print("Make bigger or smaller?: ");
+    	        	sizeChange = scan.next();
+    	        }
+    	        System.out.print("Choose side to implement(client or server): ");
+    	        side = scan.next();
+            } else if (choice2 == 6) {
+    	        System.out.print("(1) Non-zero end, or (2) No zero end: ");
+    	        typeChosen = scan.next();            	
+            }
         }
         scan.close();
 
@@ -96,6 +132,33 @@ public class Intermediate implements Runnable {
                 } else if (forwardingPacket.getData()[1] == 5) {
                     	type = "error";
                 }
+                
+                if(choice2 == 1 && chosenPacket == packetNo && side.equals("client")) {
+                	opCodeError(forwardingPacket);
+                } else if (choice2 == 2 && chosenPacket == packetNo && side.equals("client")) {
+                	blockNumberError(forwardingPacket);
+                } else if (choice2 == 3 && type.equals("request")) {
+                	System.out.println("didit");
+                	forwardingPacket = fileNameError(forwardingPacket);
+                } else if (choice2 == 4 && type.equals("request")) {
+                	modeError(forwardingPacket);
+                } else if (choice2 == 5 && type.equals(typeChosen) && side.equals("client") && chosenPacket == packetNo) {
+                	if (type.equals("data")) {
+                		forwardingPacket = sizeBiggerDataError(forwardingPacket);
+                	} else if (type.equals("ack")) {
+                		if (sizeChange.equals("bigger")) {
+                			forwardingPacket = sizeBiggerAckError(forwardingPacket);
+                		} else {
+                			forwardingPacket = sizeSmallerAckError(forwardingPacket);
+                		}
+                	}
+                } else if (choice2 == 6 && type.equals("request")) {
+                	if (typeChosen.equals("1")) {
+                		forwardingPacket = noEndZeroError(forwardingPacket);
+                	} else {
+                		forwardingPacket = badEndZeroError(forwardingPacket);
+                	}
+                } 
                 
                 /* insert statement to check for client sent ack or client sent data or request and chosen packet*/
                 if (!(choice == 2 && type.equals(typeChosen)  && packetNo == chosenPacket && side.equals("client"))) {
@@ -164,9 +227,28 @@ public class Intermediate implements Runnable {
 							    choice = 1;
 							    Thread.sleep(delay);
 						    }
+						    
+						    if(choice2 == 1 && chosenPacket == packetNo && side.equals("server")) {
+			                	opCodeError(forwardingPacket);
+			                } else if (choice2 == 2 && chosenPacket == packetNo && side.equals("server")) {
+			                	blockNumberError(forwardingPacket);
+			                } else if (choice2 == 5 && type.equals(typeChosen) && side.equals("server") && chosenPacket == packetNo) {
+			                	System.out.println(chosenPacket);
+			                	System.out.println(packetNo);
+			                	if (type.equals("data")) {
+			                		System.out.println("fgfdgdfgdf");
+			                		forwardingPacket = sizeBiggerDataError(forwardingPacket);
+			                	} else if (type.equals("ack")) {
+			                		if (sizeChange.equals("bigger")) {
+			                			forwardingPacket = sizeBiggerAckError(forwardingPacket);
+			                		} else {
+			                			forwardingPacket = sizeSmallerAckError(forwardingPacket);
+			                		}
+			                	}
+			                } 
 		
 						    // Forward response to client
-						    DatagramPacket forwarding2Packet = new DatagramPacket(forwardingPacket.getData(), servLength, clientAddress, clientPort);
+						    forwarding2Packet = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getData().length, clientAddress, clientPort);
 						    receiveSocket.send(forwarding2Packet);
 		
 						    //if choice is to duplicate this particular packet, send again
@@ -230,7 +312,7 @@ public class Intermediate implements Runnable {
     		
     		
     						    // Forward response to client
-    						    DatagramPacket forwarding2Packet = new DatagramPacket(forwardingPacket.getData(), servLength, clientAddress, clientPort);
+    						    forwarding2Packet = new DatagramPacket(forwardingPacket.getData(), servLength, clientAddress, clientPort);
     						    receiveSocket.send(forwarding2Packet);
     		
     						    //if choice is to duplicate this particular packet, send again
@@ -273,16 +355,18 @@ public class Intermediate implements Runnable {
 		return new DatagramPacket(newData, newData.length, packet.getAddress(), packet.getPort());    	
     }
     
-    public DatagramPacket blockNumberError(DatagramPacket packet, int blockNum) {
-		packet.getData()[2] = (byte) ((blockNum >> 8) & 0xFF);
-		packet.getData()[3] = (byte) (blockNum & 0xFF);
+    public DatagramPacket blockNumberError(DatagramPacket packet) {
+		packet.getData()[2] = -1;
+		packet.getData()[3] = -1;
 		return new DatagramPacket(packet.getData(), packet.getLength(),	packet.getAddress(), packet.getPort());
 	}
     
+    //implemented
     public DatagramPacket noEndZeroError(DatagramPacket packet) {    	
     	return new DatagramPacket(packet.getData(), packet.getLength()-1, packet.getAddress(), packet.getPort());   	
     }
     
+    //implemented
     public DatagramPacket badEndZeroError(DatagramPacket packet) {    	
     	byte[] newData = packet.getData();
     	newData[newData.length-1] = 9;
@@ -300,32 +384,42 @@ public class Intermediate implements Runnable {
 		return new DatagramPacket(newData, newData.length, packet.getAddress(),	packet.getPort());	
     }
     
+
  	public DatagramPacket fileNameError(DatagramPacket packet) {
  		byte[] oldData = packet.getData();
  		byte[] newData = new byte[oldData.length];
  		int i = 1;
-		i = getZero(oldData,1);
- 		
+		i = getZero(oldData,3)-2;
+ 		System.out.print(i);
  		newData[0] = oldData[0];
  		newData[1] = oldData[1];
  		
- 		for (int k=0 ; k < i-2 ; k++) {
+ 		for (int k=0 ; k < i ; k++) {
  			newData[k+2] = 0;
  		}
- 		return new DatagramPacket(newData, newData.length, packet.getAddress(),	packet.getPort());
+ 		
+ 		for (int l = 1; l < (oldData.length - i - 2); l++) {
+ 			newData[l+i+2] = oldData[l+i+2];
+ 		}
+ 		return new DatagramPacket(newData, packet.getLength(), packet.getAddress(),	packet.getPort());
  	}
  	
  	public DatagramPacket sizeBiggerDataError(DatagramPacket packet) {
- 		byte[] newData = packet.getData();
- 		newData[518] = 9;
+ 		byte[] newData = new byte[519];
+ 		for (int i = 0; i < packet.getData().length ;i++) {
+ 			newData[i] = packet.getData()[i];
+ 		}
+ 		newData[517] = 9;
  		return new DatagramPacket(newData, newData.length, packet.getAddress(),	packet.getPort());
  	}
  	
+ 	//implemented
  	public DatagramPacket sizeBiggerAckError(DatagramPacket packet) {
  		byte[] newData = new byte[] {packet.getData()[0], packet.getData()[1], packet.getData()[2], packet.getData()[3], packet.getData()[0], packet.getData()[1]};
  		return new DatagramPacket(newData, newData.length, packet.getAddress(),packet.getPort());
  	}
  	
+ 	//implemented
  	public DatagramPacket sizeSmallerAckError(DatagramPacket packet) {
  		byte[] newData = new byte[] { packet.getData()[0], packet.getData()[1], (byte)0x00 };
  		return new DatagramPacket(newData, newData.length, packet.getAddress(),packet.getPort());
