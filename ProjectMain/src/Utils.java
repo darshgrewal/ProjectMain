@@ -113,12 +113,12 @@ public class Utils {
                     throw new InvalidPacketException("Mode is neither mail, netascii nor octet.");
                 break;
             case DATA:
-                if (data.length < 5)
-                    throw new InvalidPacketException("Data packet is too short");
+                if ((data.length < 5) || (data.length > 516))
+                    throw new InvalidPacketException("Data packet size is incorrect.");
                 break;
             case ACK:
-                if (data.length < 4)
-                    throw new InvalidPacketException("Ack packet is too short");
+                if (data.length != 4)
+                    throw new InvalidPacketException("Ack packet size is incorrect.");
                 break;
 //            case ERR:
 //                if (data.length < 5)
