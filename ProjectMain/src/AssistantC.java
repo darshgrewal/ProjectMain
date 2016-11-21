@@ -15,7 +15,8 @@ public class AssistantC extends TransferHub implements Runnable{
         	listener = x;
             SendSocket = new DatagramSocket();
             fileinfo = Data;
-            pnum = Port;              
+            pnum = Port;
+            IPAddress = x.IPAddress;
         }catch(SocketException se){
             se.printStackTrace();
             System.exit(1);
