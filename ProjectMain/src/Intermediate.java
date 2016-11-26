@@ -175,6 +175,7 @@ public class Intermediate implements Runnable {
 					//if chose to duplicate this particular packet, send again
 					if (choice == 4 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("client")) {
 						System.out.println("\nSending out duplicate packet\n");
+						Utils.printInfo(forwardingPacket, Utils.SEND);
 						sendReceiveSocket.send(forwardingPacket);
 						choice = 1;
 				    	}
