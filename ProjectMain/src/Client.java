@@ -62,6 +62,7 @@ public class Client extends TransferHub
 				message = new byte[]{(byte)0, (byte)choice};
 			} 
 			else if ( choice == 3 ){
+				System.out.print("Client is now shutting down.");
 				break;
 			} else {
 				continue;
