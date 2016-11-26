@@ -136,10 +136,12 @@ public class Utils {
 	                if(!mode.equals("mail") && !mode.equals("netascii") && !mode.equals("octet"))
 	                    throw new InvalidPacketException("Mode is neither mail, netascii nor octet.");
 	                break;
-	            case DATA:
-	                if ((length < 5) || (length > 516))
-	                    throw new InvalidPacketException("Data packet size is incorrect.");
-	                break;
+	            	case DATA:
+	            	if(!(data[1]==4 || data[1]==3)){
+		                if ((length < 5) || (length > 516))
+		                    throw new InvalidPacketException("Data packet size is incorrect.");
+	            	}
+	            	break;
 	            case ACK:
 	                if (length != 4)
 	                    throw new InvalidPacketException("Ack packet size is incorrect.");
