@@ -8,7 +8,7 @@ public class AssistantC extends TransferHub implements Runnable{
     DatagramSocket SendSocket;
 //    byte [] fileinfo = new byte [512];
     int pnum;
-    Server listener;
+    private Server listener;
     
     private DatagramPacket reqPacket;
   

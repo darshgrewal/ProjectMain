@@ -41,15 +41,27 @@ public class Client extends TransferHub
 				break;
 			}
 		}
-		while (true){
-			try
+		
+		while(true){
+			System.out.println("Enter the server IP address or enter 'localhost' for the local host: ");
+			String host = scan.next();
+			if(host.equals("localhost") || host.equals("local"))
 			{
-				IPAddress = InetAddress.getLocalHost();
-				break;
+				try
+				{
+					IPAddress = InetAddress.getLocalHost();
+					break;
+				}
+				catch(UnknownHostException uhe)
+				{
+					System.out.println("Unknown host");
+				}
 			}
-			catch(UnknownHostException uhe)
-			{
-				System.out.println("Unknown host...");
+			try {
+				IPAddress = InetAddress.getByName(host);
+				break;
+			} catch(UnknownHostException e){
+				System.out.println("Unknown Host");
 			}
 		}
 		
