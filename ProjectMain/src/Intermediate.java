@@ -89,7 +89,7 @@ public class Intermediate implements Runnable {
             } else if (choice2 == 5) {
             	System.out.print("Choose an integer number for which packet to change: ");
     	        chosenPacket = scan.nextInt();
-            	System.out.print("Choose type of packet to duplicate(ack or data): ");
+            	System.out.print("Choose type of packet to change(ack or data): ");
     	        typeChosen = scan.next();
     	        if (typeChosen.equals("ack")) {
     	        	System.out.print("Make bigger or smaller?: ");
@@ -100,6 +100,9 @@ public class Intermediate implements Runnable {
             }
         }
         scan.close();
+        if (chosenPacket == 0) {
+        	chosenPacket = 25134;
+        }
 
         while (true) {
 		
@@ -267,10 +270,14 @@ public class Intermediate implements Runnable {
 						} else {
 							System.out.println("LOST THE PACKET");
 							choice = 1;
+							if (typeChosen.equals("ack")) {
+								break;
+							}
 						}
 					}
 
                 } else {
+                	System.out.println("Packet Lost.");
                 	if (typeChosen.equals("ack")) {
                 		choice = 1;
                 		while (true) {
