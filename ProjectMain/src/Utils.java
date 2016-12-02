@@ -50,7 +50,7 @@ public class Utils {
 
         // Process the received datagram.
         System.out.println("\nHost ID: " + packet.getAddress());
-        if(sendReceive == SEND) {
+        if(!(sendReceive == SEND)) {
             System.out.println("Sent on port number: " + packet.getPort());
         } else {
             System.out.println("Received on port number: " + packet.getPort());
@@ -58,6 +58,9 @@ public class Utils {
         System.out.println("Length of the packet: " + packetLength);
         // Form a String from the byte array.
         int block = getBlockNo(packet);
+        if (block == 25134) {
+        	block = 0;
+        }
         byte packType = packet.getData()[1];
         System.out.printf("Type: %s Packet\n", upCodeTypeMap.get(packType));
 
@@ -136,12 +139,10 @@ public class Utils {
 	                if(!mode.equals("mail") && !mode.equals("netascii") && !mode.equals("octet"))
 	                    throw new InvalidPacketException("Mode is neither mail, netascii nor octet.");
 	                break;
-	            	case DATA:
-	            	if(!(data[1]==4 || data[1]==3)){
-		                if ((length < 5) || (length > 516))
-		                    throw new InvalidPacketException("Data packet size is incorrect.");
-	            	}
-	            	break;
+	            case DATA:
+	                if ((length < 5) || (length > 516))
+	                    throw new InvalidPacketException("Data packet size is incorrect.");
+	                break;
 	            case ACK:
 	                if (length != 4)
 	                    throw new InvalidPacketException("Ack packet size is incorrect.");
