@@ -59,6 +59,7 @@ public class Client extends TransferHub
 			}
 			try {
 				IPAddress = InetAddress.getByName(host);
+				serverIPAddress = InetAddress.getLocalHost();
 				break;
 			} catch(UnknownHostException e){
 				System.out.println("Unknown Host");

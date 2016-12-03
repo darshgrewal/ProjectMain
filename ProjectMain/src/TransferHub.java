@@ -27,6 +27,7 @@ public class TransferHub {
 	            //rPacket.setData(Arrays.copyOfRange(rPacket.getData(), 0, rPacket.getLength()));
 	            //client receives the notification that packet has reached it from the server
 	            System.out.println("Host: The packet has been received.");
+	            serverIPAddress=rPacket.getAddress();
 	            Utils.printInfo(rPacket, Utils.RECEIVE);
 	            normal = true;
 	        } catch (SocketTimeoutException e){
@@ -116,12 +117,6 @@ public class TransferHub {
     public void sendBytes(DatagramSocket sendingS, int pNumber, byte[] msg)
     {
         DatagramPacket sendDataP;
-    	try {
-			IPAddress = InetAddress.getLocalHost();
-		} catch (UnknownHostException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
         // send data
         try {
             sendDataP = new DatagramPacket(msg, msg.length, IPAddress, pNumber);
