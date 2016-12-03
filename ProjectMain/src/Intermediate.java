@@ -46,12 +46,16 @@ public class Intermediate implements Runnable {
         if (choice == 1) {
         	//do nothing
         } else if (choice == 2) { // loose packet
-	        System.out.print("Choose an integer number for which packet to lose:");
-	        chosenPacket = scan.nextInt();
 	        System.out.print("Choose type of packet to lose(request,ack, or data):");
 	        typeChosen = scan.next();
-	        System.out.print("Choose side to implement(client or server)");
-	        side = scan.next();
+	        if (typeChosen.equals("request")){
+	        	chosenPacket=0;
+	        } else {
+		        System.out.print("Choose an integer number for which packet to lose:");
+		        chosenPacket = scan.nextInt();
+		        System.out.print("Choose side to implement(client or server)");
+		        side = scan.next();
+	        }
         } else if (choice == 3) { // delay packet
 		System.out.print("Choose an integer number for which packet to delay:");
             	chosenPacket = scan.nextInt();
@@ -122,6 +126,9 @@ public class Intermediate implements Runnable {
                 }
 
                 packetNo = Utils.getBlockNo(forwardingPacket);
+                if (packetNo > 2500) {
+                	packetNo = 0;
+                }
 
                 if (forwardingPacket.getData()[1] == 1 || forwardingPacket.getData()[1] == 2) {
                 	type = "request";
@@ -138,7 +145,6 @@ public class Intermediate implements Runnable {
                 } else if (choice2 == 2 && chosenPacket == packetNo && side.equals("client")) {
                 	forwardingPacket = blockNumberError(forwardingPacket);
                 } else if (choice2 == 3 && type.equals("request")) {
-                	System.out.println("didit");
                 	forwardingPacket = fileNameError(forwardingPacket);
                 } else if (choice2 == 4 && type.equals("request")) {
                 	modeError(forwardingPacket);
@@ -157,7 +163,7 @@ public class Intermediate implements Runnable {
                 } 
                 
                 /* insert statement to check for client sent ack or client sent data or request and chosen packet*/
-                if (!(choice == 2 && type.equals(typeChosen)  && packetNo == chosenPacket && side.equals("client"))) {
+                if (!(choice == 2 && type.equals(typeChosen)  && packetNo == chosenPacket && side.equals("client")) && !(choice == 2 && typeChosen.equals("request"))) {
 					if (choice == 3 && type.equals(typeChosen) && packetNo == chosenPacket && side.equals("client")) {
 		                    		choice = 1;
 		                        	Thread.sleep(delay);
