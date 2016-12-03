@@ -46,25 +46,29 @@ public class TransferHub {
     	return true;
     }
 
-  //class handles the files that being sent over from the client
+    //class handles the files that being sent over from the client
     //stores them in a file of the users choice
     // Need to send the ack even if the packet is duplicate. The duplicate ack is handled by the transmitter.
-    public void getFile(DatagramSocket socket, String fName, int callerId){
-
-        int expectedPacketNo = 1;
-
+    public void getFile(DatagramSocket socket, String fName, int callerId) {
         //holds the message that will be sent over
         byte[] fileInfo = new byte[SIZEB];
         //the packet in which the message will be sent in
         DatagramPacket dataPacket = new DatagramPacket(fileInfo, fileInfo.length);
 
+        while (!clientRequest(socket, dataPacket, "req")) {
+        }
+
+        getFile(dataPacket, socket, fName, callerId);
+    }
+
+    public void getFile(DatagramPacket dataPacket, DatagramSocket socket, String fName, int callerId){
+
+        int expectedPacketNo = 1;
+
         byte aT[] = new byte[]{0, 4};
         InOut newFile = new InOut(fName);
 
         while (true) {
-    		while (!clientRequest(socket, dataPacket, "req")) {
-        	}
-
             try {
                 Utils.checkPacketStructure(dataPacket, Utils.DATA);
             } catch (Utils.InvalidPacketException e) {
@@ -108,8 +112,10 @@ public class TransferHub {
                 break;
 
             }
-        }
 
+            while (!clientRequest(socket, dataPacket, "req")) {
+            }
+        }
     }
 
     //called when you need to send a datapacket to the client

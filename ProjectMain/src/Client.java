@@ -100,17 +100,18 @@ public class Client extends TransferHub
 			message = byteArrayCreater(message, new byte[]{0});
 			
 			sendBytes(socketSR, socket, message);
+
+			byte[] serverReply = new byte[SIZEB];
+			DatagramPacket receivePacket = new DatagramPacket(serverReply, serverReply.length);
+			while (!clientRequest(socketSR, receivePacket, "req")) {
+				System.out.println("Resending the request.");
+				sendBytes(socketSR, socket, message);
+			}
+
 			// RRQ
 			if (message[1] == 1){
-				getFile(socketSR, "client/" + fName, CLIENT);
+				getFile(receivePacket, socketSR, "client/" + fName, CLIENT);
 			} else if (message[1] == 2) {	//WRQ
-				message = new byte[SIZEB];
-				DatagramPacket receivePacket = new DatagramPacket(message, message.length);
-				while (!clientRequest(socketSR, receivePacket,"req")) {
-					System.out.println("TimeoutOccured");
-	        	}
-				//clientRequest(socketSR, receivePacket);
-				//cAndSendError(socket, "Timeout Occured.", 0, callerId);
 				try {
 					Utils.checkPacketStructure(receivePacket, Utils.ACK);
 					if (receivePacket.getData()[2] == 0 &&

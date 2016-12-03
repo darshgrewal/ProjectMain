@@ -27,33 +27,7 @@ public class AssistantC extends TransferHub implements Runnable{
         }
     }
  
-     
-    //returns the position as integer next to the 0
-//    private int getZero(byte[] msg, int currPos)
-//    {
-//        for (int i = currPos; i < msg.length; i++){
-//            if (msg[i] == 0){
-//                return i;
-//            }
-//        }
-//        return 0;
-//    }
-      
-//    protected void makeFolder(String pathname)
-//    {
-//        File f1 = new File(pathname);
-//
-//        if(!f1.exists()){
-//            try{
-//                f1.mkdirs();
-//            }
-//            catch(SecurityException se){
-//                se.printStackTrace();
-//            }
-//        }
-//    }
-
-  //passes a string array that contains the request made by the client 
+  //passes a string array that contains the request made by the client
     private String[] createArray(DatagramPacket packet) throws InvalidRequestException
     {
     	byte[] message = packet.getData();
@@ -86,21 +60,6 @@ public class AssistantC extends TransferHub implements Runnable{
         return req;
     }
      
- 
-//    //check to see if the data packet is valid and formatted properly
-//    private void packetVerify(byte[] packetData) throws InvalidRequestException
-//    {
-//        if(packetData[0] != (byte)0){
-//            throw new InvalidRequestException("Error first byte is not a 0");
-//        }
-//        if(packetData[1] != (byte)1 && packetData[1] != (byte)2){
-//            throw new InvalidRequestException("Error second byte is not a 1 or a 2");
-//        }
-//        if(packetData[2] == (byte)0){
-//            throw new InvalidRequestException("Error no file name");
-//        }
-//    }
-      
     //lets the client know the response depending on which type of request is being received
     private void reqHandle(DatagramPacket packet, int port){
     	byte[] message;
