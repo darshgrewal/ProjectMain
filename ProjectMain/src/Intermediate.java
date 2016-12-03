@@ -104,9 +104,6 @@ public class Intermediate implements Runnable {
             }
         }
         scan.close();
-        if (chosenPacket == 0) {
-        	chosenPacket = 25134;
-        }
 
         while (true) {
 		
@@ -126,9 +123,6 @@ public class Intermediate implements Runnable {
                 }
 
                 packetNo = Utils.getBlockNo(forwardingPacket);
-                if (packetNo > 2500) {
-                	packetNo = 0;
-                }
 
                 if (forwardingPacket.getData()[1] == 1 || forwardingPacket.getData()[1] == 2) {
                 	type = "request";
