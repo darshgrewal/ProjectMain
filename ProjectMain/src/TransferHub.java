@@ -118,7 +118,7 @@ public class TransferHub {
         }
     }
 
-    //called when you need to send a datapacket to the client
+    //called when you need to send a datapacket
     public void sendBytes(DatagramSocket sendingS, int pNumber, byte[] msg)
     {
         DatagramPacket sendDataP;
@@ -191,6 +191,7 @@ public class TransferHub {
                 sendBytes(socket, pNumber, fileInfo);
             } else {//working error handler for file not found on server
             	cAndSendError(socket,"\nError: File not found.", 1, pNumber);
+            	break;
             }
 
             fileInfo = new byte[SIZEB];
