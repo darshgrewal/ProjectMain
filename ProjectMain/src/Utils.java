@@ -140,21 +140,13 @@ public class Utils {
 	                    throw new InvalidPacketException("Mode is neither mail, netascii nor octet.");
 	                break;
 	            case DATA:
-	                if ((length < 5) || (length > 516))
+	                if ((length < 4) || (length > 516))
 	                    throw new InvalidPacketException("Data packet size is incorrect.");
 	                break;
 	            case ACK:
 	                if (length != 4)
 	                    throw new InvalidPacketException("Ack packet size is incorrect.");
 	                break;
-	//            case ERR:
-	//                if (length < 5)
-	//                    throw new InvalidPacketException("Error packet is too short");
-	//                if (data[2] != 0 || data[3] > 7)
-	//                    throw new InvalidPacketException("Error code in the error packet is invalid");
-	//                if (getZero(data, 4) == -1)
-	//                    throw new InvalidPacketException("Error packet does not end in a 0");
-	//                break;
 	            default:
 	                throw new InvalidPacketException("Packet type unrecognized.");
 	        }
