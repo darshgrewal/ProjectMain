@@ -157,7 +157,7 @@ public class TransferHub {
         byte[] fileInfo;
 
         InOut newFile = new InOut(fName);
-
+        File f = new File(fName);
         byte[] dataBlockInfo = new byte[]{0, 3};
 
         byte[] newB = new byte[]{0,1};
@@ -167,6 +167,12 @@ public class TransferHub {
             byte[] dataBInfo = null;
 
             //throws an exception if file cannot be sent
+            System.out.println("hello"+f.canWrite());
+            if(!f.canWrite()) {
+            	System.out.println("File is not accessible.");
+            	cAndSendError(socket, "Access is Denied.", 2, pNumber);
+    			break;
+            } 
             try {
                 dataBInfo = newFile.read(SIZEDB);
             } catch (SecurityException e) {
@@ -189,7 +195,12 @@ public class TransferHub {
 	            fileInfo = byteArrayCreater(dataBlockInfo, newB);
 	            fileInfo = byteArrayCreater(fileInfo, dataBInfo);
                 sendBytes(socket, pNumber, fileInfo);
-            } else {//working error handler for file not found on server
+            } 
+            else if(f.canWrite()){
+            	cAndSendError(socket,"\nError: File retarded.", 1, pNumber);
+            	break;
+            }
+            else {//working error handler for file not found on server
             	cAndSendError(socket,"\nError: File not found.", 1, pNumber);
             	break;
             }
