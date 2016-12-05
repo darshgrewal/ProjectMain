@@ -248,10 +248,7 @@ public class Intermediate implements Runnable {
 			                } 
 		
 						    // Forward response to client
-						    if (choice2 == 5 && type.equals(typeChosen) && side.equals("server") && chosenPacket == packetNo) {
-						    	servLength = 519;
-						    }
-						    forwarding2Packet = new DatagramPacket(forwardingPacket.getData(), servLength, clientAddress, clientPort);
+						    forwarding2Packet = new DatagramPacket(forwardingPacket.getData(), forwardingPacket.getLength(), clientAddress, clientPort);
 						    receiveSocket.send(forwarding2Packet);
 		
 						    //if choice is to duplicate this particular packet, send again

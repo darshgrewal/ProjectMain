@@ -5,7 +5,7 @@ import java.io.*;
 public class TransferHub {
 
     //the size values shouldn't change so they were made final variables
-    public final int SIZEB = 516;
+    public final int SIZEB = 520;
     public final int SIZEDB = 512;
 
     public final int SERVER = 0;
