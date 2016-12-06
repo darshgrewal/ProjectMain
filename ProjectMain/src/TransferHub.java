@@ -161,11 +161,6 @@ public class TransferHub {
             byte[] dataBInfo = null;
 
             //throws an exception if file cannot be sent
-            if(!f.canWrite()) {
-            	System.out.println("File is not accessible.");
-            	cAndSendError(socket, "Access is Denied.", 2, pNumber);
-    			break;
-            } 
             try {
                 dataBInfo = newFile.read(SIZEDB);
             } catch (SecurityException e) {

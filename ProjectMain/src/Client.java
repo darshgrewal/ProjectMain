@@ -105,7 +105,7 @@ public class Client extends TransferHub
 			            break;
 		        	} catch (IOException e){
 		
-		            	if (e.getMessage().contains("Access is denied")) {
+		            	if (e.getMessage().contains("Permission denied")) {
 		            		//working error handler for access denied in client
 		            		System.out.println("Access is denied. Enter valid filename.");
 			        		System.out.print("Enter file name you want to use: ");
