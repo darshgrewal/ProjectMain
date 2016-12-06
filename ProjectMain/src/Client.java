@@ -11,7 +11,7 @@ import java.net.InetAddress;
 public class Client extends TransferHub
 {
 	private DatagramSocket socketSR;
-	
+	private String activeFolder;
 	
 	public Client()
 	{
@@ -29,7 +29,6 @@ public class Client extends TransferHub
 		int socket = 2269;
 		
 		while(true){
-			
 			System.out.print("Enter (1) to run normally, enter (2) to run in test mode: ");
 			int mode = scan.nextInt();
 			
@@ -41,18 +40,24 @@ public class Client extends TransferHub
 				break;
 			}
 		}
-		while (true){
-			try
-			{
-				IPAddress = InetAddress.getLocalHost();
-				break;
-			}
-			catch(UnknownHostException uhe)
-			{
-				System.out.println("Unknown host...");
-			}
+		System.out.print("Enter active folder directory, or (d) for default: ");
+		activeFolder = scan.next();
+		if (activeFolder.equals("d")) {
+			activeFolder = "client";
 		}
-		
+		File dir = new File(activeFolder);
+		if (!dir.exists()) {
+			dir.mkdirs();
+		}
+		try
+		{
+			IPAddress = InetAddress.getLocalHost();
+		}
+		catch(UnknownHostException uhe)
+		{
+			System.out.println("Unknown host...");
+		}
+
 		while(true) {
 			byte message[];
 
@@ -73,7 +78,8 @@ public class Client extends TransferHub
 			if (choice == 2) {
 				while (true) {
 					try {
-			            FileInputStream test = new FileInputStream(System.getProperty("user.dir") + "/client/" + fName);
+//			            FileInputStream test = new FileInputStream(System.getProperty("user.dir") + "/client/" + fName);
+			            FileInputStream test = new FileInputStream(activeFolder + "/" + fName);
 			            test.close();
 			            
 			           
@@ -115,13 +121,15 @@ public class Client extends TransferHub
 
 			// RRQ
 			if (message[1] == 1){
-				getFile(receivePacket, socketSR, "client/" + fName, CLIENT);
+//				getFile(receivePacket, socketSR, "client/" + fName, CLIENT);
+				getFile(receivePacket, socketSR, activeFolder + "/" + fName, CLIENT);
 			} else if (message[1] == 2) {	//WRQ
 				try {
 					Utils.checkPacketStructure(receivePacket, Utils.ACK);
 					if (receivePacket.getData()[2] == 0 &&
 						receivePacket.getData()[3] == 0)
-							sendFile(socketSR, receivePacket.getPort(), "client/" + fName, CLIENT);
+//							sendFile(socketSR, receivePacket.getPort(), "client/" + fName, CLIENT);
+							sendFile(socketSR, receivePacket.getPort(), activeFolder + "/" + fName, CLIENT);
 					else
 						cAndSendError(socketSR, "Illegal TFTP operation.", 4, socket);
 				} catch (Utils.InvalidPacketException e) {
@@ -134,22 +142,10 @@ public class Client extends TransferHub
 		scan.close();
 	}
 	
-	protected void createFolder(String name){
-        File filedirectory = new File(name);
-        if(!filedirectory.exists()){
-            try{
-                filedirectory.mkdirs();
-            }
-            catch(SecurityException se){
-                se.printStackTrace();
-            }
-        }
-    }
-	
 	public static void main(String[] args){
 	    
 		Client cthread = new Client();
-		cthread.createFolder("client");
+//		cthread.createFolder("client");
 		   
 		cthread.getandSend();
 	}

@@ -368,7 +368,6 @@ public class TransferHub {
 	            in.close();
 
 	            if(bytesRead < blocks) {
-	                System.out.println("\nFixing array information... ");
 	                byte dataReadTrim[] = Arrays.copyOf(dataRead, bytesRead);
 	                return dataReadTrim;
 	            }
