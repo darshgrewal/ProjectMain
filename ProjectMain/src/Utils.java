@@ -49,11 +49,11 @@ public class Utils {
         int packetLength = packet.getLength();
 
         // Process the received datagram.
-        System.out.println("\nHost ID: " + packet.getAddress());
-        if(!(sendReceive == SEND)) {
-            System.out.println("Sent on port number: " + packet.getPort());
+        System.out.println("Host ID: " + packet.getAddress());
+        if(sendReceive == SEND) {
+            System.out.println("Sent to port number: " + packet.getPort());
         } else {
-            System.out.println("Received on port number: " + packet.getPort());
+            System.out.println("Received from port number: " + packet.getPort());
         }
         System.out.println("Length of the packet: " + packetLength);
         // Form a String from the byte array.

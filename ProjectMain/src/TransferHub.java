@@ -26,7 +26,7 @@ public class TransferHub {
 	            rSocket.receive(rPacket);
 	            //rPacket.setData(Arrays.copyOfRange(rPacket.getData(), 0, rPacket.getLength()));
 	            //client receives the notification that packet has reached it from the server
-	            System.out.println("Host: The packet has been received.");
+	            System.out.println("\nA packet has been received.");
 	            Utils.printInfo(rPacket, Utils.RECEIVE);
 	            normal = true;
 	        } catch (SocketTimeoutException e){
@@ -132,7 +132,7 @@ public class TransferHub {
         try {
             sendDataP = new DatagramPacket(msg, msg.length, IPAddress, pNumber);
 
-            System.out.println("Client: Packet is being sent");
+            System.out.println("\nA Packet is being sent.");
 
             //prints all the information in the packet that is being sent
             Utils.printInfo(sendDataP, Utils.SEND);
@@ -167,7 +167,6 @@ public class TransferHub {
             byte[] dataBInfo = null;
 
             //throws an exception if file cannot be sent
-            System.out.println("hello"+f.canWrite());
             if(!f.canWrite()) {
             	System.out.println("File is not accessible.");
             	cAndSendError(socket, "Access is Denied.", 2, pNumber);
@@ -369,7 +368,7 @@ public class TransferHub {
 	            in.close();
 
 	            if(bytesRead < blocks) {
-	                System.out.println("Fixing array information... ");
+	                System.out.println("\nFixing array information... ");
 	                byte dataReadTrim[] = Arrays.copyOf(dataRead, bytesRead);
 	                return dataReadTrim;
 	            }
