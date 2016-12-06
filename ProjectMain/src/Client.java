@@ -76,12 +76,7 @@ public class Client extends TransferHub
 			            FileInputStream test = new FileInputStream(System.getProperty("user.dir") + "/client/" + fName);
 			            test.close();
 			            
-			            File file = new File(fName);
-			            if(!file.canWrite()) {
-			            	System.out.println("File is not accessible.");
-			            	System.out.print("Enter file name you want to use: ");
-			    			fName = scan.next();
-			            } 
+			           
 			            break;
 		        	} catch (IOException e){
 		
