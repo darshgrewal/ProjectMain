@@ -122,12 +122,6 @@ public class TransferHub {
     public void sendBytes(DatagramSocket sendingS, int pNumber, byte[] msg)
     {
         DatagramPacket sendDataP;
-    	try {
-			IPAddress = InetAddress.getLocalHost();
-		} catch (UnknownHostException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
         // send data
         try {
             sendDataP = new DatagramPacket(msg, msg.length, IPAddress, pNumber);

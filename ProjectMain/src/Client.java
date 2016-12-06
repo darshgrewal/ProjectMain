@@ -40,6 +40,8 @@ public class Client extends TransferHub
 				break;
 			}
 		}
+		
+		
 		System.out.print("Enter active folder directory, or (d) for default: ");
 		activeFolder = scan.next();
 		if (activeFolder.equals("d")) {
@@ -49,15 +51,32 @@ public class Client extends TransferHub
 		if (!dir.exists()) {
 			dir.mkdirs();
 		}
-		try
-		{
-			IPAddress = InetAddress.getLocalHost();
+		
+		while(true){
+			System.out.println("Enter the server IP address or enter 'localhost' for the local host: ");
+			String host = scan.next();
+			if(host.equals("localhost") || host.equals("local"))
+			{
+				try
+				{
+					IPAddress = InetAddress.getLocalHost();
+					break;
+				} 
+				catch(UnknownHostException uhe)
+				{
+					System.out.println("Unknown host");
+				}
+			}
+			try {
+				IPAddress = InetAddress.getByName(host);
+				serverIPAddress = InetAddress.getLocalHost();
+				break;
+			} catch(UnknownHostException e){
+				System.out.println("Unknown Host");
+			}
 		}
-		catch(UnknownHostException uhe)
-		{
-			System.out.println("Unknown host...");
-		}
-
+		
+		
 		while(true) {
 			byte message[];
 
